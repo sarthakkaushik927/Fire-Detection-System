@@ -128,7 +128,7 @@ export default function LandingPage() {
         <motion.div 
           className="flex gap-12 whitespace-nowrap text-white font-mono font-bold uppercase text-sm"
           animate={{ x: ["0%", "-100%"] }}
-          transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+          transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
         >
           {[...Array(10)].map((_, i) => (
             <React.Fragment key={i}>

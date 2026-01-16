@@ -9,11 +9,9 @@ import {
   Loader2, Cloud, Wind, Droplets, AlertTriangle, MapPin
 } from 'lucide-react'
 
-// --- CONFIGURATION ---
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000"
 const WS_URL = import.meta.env.VITE_WS_URL || "ws://127.0.0.1:8000/ws/drone"
 
-// Match this with your Backend REGION_BBOX
 const REGIONS = {
   india: ["up", "mp", "maharashtra"]
 }
@@ -58,22 +56,19 @@ function WeatherWidget() {
 export default function Dashboard({ session }) {
   const navigate = useNavigate()
   
-  // Region State
   const [selectedCountry, setSelectedCountry] = useState("india")
   const [selectedState, setSelectedState] = useState("up")
 
-  // Data States
   const [mapHtml, setMapHtml] = useState('')
   const [mapLoading, setMapLoading] = useState(false)
   const [highRiskPoints, setHighRiskPoints] = useState([]) 
   const [riskLoading, setRiskLoading] = useState(false)
 
-  // Drone State
   const { frame: liveFrame, isConnected } = useDroneStream(WS_URL)
   const [simulatedFrame, setSimulatedFrame] = useState(null)
   const [simLoading, setSimLoading] = useState(false)
 
-  // 1. Fetch Map Data (Visual)
+  // 1. Fetch Map Data
   const fetchMap = async () => {
     setMapLoading(true)
     try {
@@ -88,7 +83,7 @@ export default function Dashboard({ session }) {
     finally { setMapLoading(false) }
   }
 
-  // 2. Fetch High Risk Points (Data for Drone/List)
+  // 2. Fetch High Risk Points
   const fetchHighRiskData = async () => {
     setRiskLoading(true)
     try {
@@ -118,7 +113,6 @@ export default function Dashboard({ session }) {
     fetchMap()
   }, [selectedCountry, selectedState])
 
-  // 3. Simulation Upload
   const handleSimulationUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -141,7 +135,7 @@ export default function Dashboard({ session }) {
     }
   }
 
-  // 🟢 Deploy Drone Logic
+  // 🟢 DEPLOY LOGIC: Sends specific target AND full list
   const deployDrone = (targetCoords) => {
     if (!targetCoords && highRiskPoints.length === 0) {
       alert("No active fire targets detected.")
