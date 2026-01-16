@@ -9,8 +9,9 @@ import {
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
-const BACKEND_URL = "http://127.0.0.1:8000"
-const WS_URL = "ws://127.0.0.1:8000/ws/drone"
+// 🔴 UPDATED: Using Environment Variables
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+const WS_URL = import.meta.env.VITE_WS_URL
 
 const DEMO_STATS = [
   { name: 'High', count: 12, color: '#ef4444' }, // Red
@@ -41,7 +42,10 @@ export default function Dashboard({ session }) {
       })
       const data = await res.json()
       setMapHtml(data.html)
-    } catch (e) { alert("Backend Offline") }
+    } catch (e) { 
+      console.error(e)
+      alert(`Backend Connection Failed. check .env`) 
+    }
     finally { setMapLoading(false) }
   }
 
@@ -56,7 +60,10 @@ export default function Dashboard({ session }) {
       const response = await fetch(`${BACKEND_URL}/draw_boxes_fire`, { method: 'POST', body: formData })
       const result = await response.json()
       if (result.data) setSimulatedFrame(`data:image/jpeg;base64,${result.data}`)
-    } catch (err) { alert("Simulation failed.") } 
+    } catch (err) { 
+      console.error(err)
+      alert("Simulation failed. Check backend connection.") 
+    } 
     finally { setSimLoading(false) }
   }
 
@@ -122,7 +129,6 @@ export default function Dashboard({ session }) {
       <section className="col-span-12 lg:col-span-4 flex flex-col gap-6">
         
         {/* 🛸 CARD 2: DRONE FEED (HUD Style) */}
-        {/* Note: Drone feed always stays dark for better contrast with video/images */}
         <motion.div variants={itemVariants} className="bg-black rounded-[2rem] h-[400px] relative overflow-hidden shadow-2xl border-[4px] border-slate-800">
            
            {/* HUD Overlays */}
