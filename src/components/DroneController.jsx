@@ -1,16 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Crosshair, Plane, PhoneCall, ChevronLeft, MapPin, 
   Wind, Thermometer, Battery, CheckCircle2, Target, AlertTriangle, 
-  Video, Maximize, Compass, LocateFixed, RefreshCw, Flame, Signal
+  Video, Maximize, Compass, LocateFixed, RefreshCw, Flame, Signal, 
+  Square, Map as MapIcon, Navigation
 } from 'lucide-react'
 
-// 🟢 EMPTY VIDEO URL (Add your link here later)
-const DRONE_VIDEO_URL = "" 
+// 🟢 YOUTUBE VIDEO URL
+const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/Z8_YeArWzD4?autoplay=1&mute=1&controls=0&loop=1&playlist=Z8_YeArWzD4"
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000"
+
+// Fallback Presets
+const PRESET_LOCATIONS = [
+  { name: "New Delhi (HQ)", lat: 28.6139, lon: 77.2090 },
+  { name: "Mumbai Sector", lat: 19.0760, lon: 72.8777 },
+  { name: "Bangalore Unit", lat: 12.9716, lon: 77.5946 },
+  { name: "Lucknow Outpost", lat: 26.8467, lon: 80.9462 },
+]
 
 export default function DroneController() {
   const navigate = useNavigate()
@@ -22,6 +31,10 @@ export default function DroneController() {
   const [loadingTargets, setLoadingTargets] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(new Date())
 
+  // Map State
+  const [mapHtml, setMapHtml] = useState('')
+  const [mapLoading, setMapLoading] = useState(false)
+
   // Manual Input State
   const [manualLat, setManualLat] = useState(activeTarget.lat)
   const [manualLon, setManualLon] = useState(activeTarget.lon)
@@ -29,13 +42,11 @@ export default function DroneController() {
   // Drone State
   const [status, setStatus] = useState('STANDBY') 
   const [progress, setProgress] = useState(0)
-  const videoRef = useRef(null)
 
-  // 🟢 1. FETCH REAL SATELLITE DATA (Auto-Refresh every 10s)
+  // 1. INITIAL FETCH
   useEffect(() => {
-    fetchTargets() // Initial Fetch
-    const interval = setInterval(fetchTargets, 10000) // Poll API every 10s
-    return () => clearInterval(interval)
+    fetchTargets()
+    fetchMapData() // Get the visual map
   }, [])
 
   // Sync Manual Inputs
@@ -44,6 +55,7 @@ export default function DroneController() {
     setManualLon(activeTarget.lon)
   }, [activeTarget])
 
+  // 🟢 FETCH TARGET LIST
   const fetchTargets = async () => {
     setLoadingTargets(true)
     try {
@@ -56,21 +68,18 @@ export default function DroneController() {
       
       if (result.data) {
         const parsedData = JSON.parse(result.data)
-        
-        // Convert Column-based data to Row-based objects
         const rows = Object.keys(parsedData.latitude).map(key => ({
+          
           lat: parsedData.latitude[key],
           lon: parsedData.longitude[key],
-          brightness: parsedData.brightness?.[key] || 300, // Default if missing
-          confidence: 'h' // Since API returns high conf
+          brightness: parsedData.brightness?.[key] || 300,
+          confidence: 'h'
         }))
-        
-        // Sort by Intensity (Brightness)
+        console.log({result, parsedData, rows});
+        // Sort by intensity
         rows.sort((a, b) => b.brightness - a.brightness)
-
         setAllTargets(rows)
         
-        // If we have no active target, select the most critical one
         if (rows.length > 0 && !location.state?.target) {
           setActiveTarget(rows[0])
         }
@@ -81,6 +90,21 @@ export default function DroneController() {
     } finally {
       setLoadingTargets(false)
     }
+  }
+
+  // 🟢 FETCH MINI-MAP HTML
+  const fetchMapData = async () => {
+    setMapLoading(true)
+    try {
+      const res = await fetch(`${BACKEND_URL}/get_locations`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ country: "india", state: "up", day_range: 3 })
+      })
+      const data = await res.json()
+      setMapHtml(data.html)
+    } catch (e) { console.error("Map Fetch Error:", e) }
+    finally { setMapLoading(false) }
   }
 
   const handleDeploy = () => {
@@ -96,12 +120,10 @@ export default function DroneController() {
     }, 30)
   }
 
-  // Auto-play video logic
-  useEffect(() => {
-    if (status === 'ACTIVE' && videoRef.current) {
-      videoRef.current.play().catch(e => console.log("Video empty or failed:", e))
-    }
-  }, [status])
+  const handleStop = () => {
+    setStatus('STANDBY')
+    setProgress(0)
+  }
 
   const handleManualUpdate = () => setActiveTarget({ lat: parseFloat(manualLat), lon: parseFloat(manualLon) })
   const handleEmergencyCall = () => window.location.href = 'tel:+917060321453'
@@ -137,20 +159,27 @@ export default function DroneController() {
       {/* MAIN CONTENT */}
       <div className="relative z-10 max-w-[1600px] mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 h-full overflow-hidden">
         
-        {/* 📋 LEFT: REAL DATA FEED */}
+        {/* LEFT: REAL DATA FEED (Scrollable & Refreshable) */}
         <div className="lg:col-span-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-3xl border border-slate-200 dark:border-white/10 p-4 flex flex-col h-full overflow-hidden shadow-lg">
            
-           {/* Header with Live Status */}
            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200 dark:border-white/10">
               <Signal size={18} className={loadingTargets ? "text-yellow-500 animate-pulse" : "text-green-500"}/>
               <div>
                  <h3 className="font-bold text-sm uppercase">Live Satellite Feed</h3>
-                 <p className="text-[9px] text-slate-400">UPDATED: {lastUpdated.toLocaleTimeString()}</p>
+                 <p className="text-[9px] text-slate-400">LAST SCAN: {lastUpdated.toLocaleTimeString()}</p>
               </div>
-              <span className="bg-red-500 text-white text-[10px] px-2 rounded-full ml-auto font-bold">{allTargets.length}</span>
+              
+              {/* 🟢 REFRESH BUTTON */}
+              <button 
+                onClick={fetchTargets} 
+                className="ml-auto p-1.5 bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-red-500 hover:text-white transition-colors"
+                title="Refresh Satellite Data"
+              >
+                <RefreshCw size={14} className={loadingTargets ? "animate-spin" : ""} />
+              </button>
            </div>
 
-           {/* 🟢 ACTUAL RED ZONES LIST */}
+           {/* TARGET LIST (Scrollable) */}
            <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar min-h-[150px]">
               {allTargets.length > 0 ? allTargets.map((target, idx) => (
                  <button
@@ -165,16 +194,13 @@ export default function DroneController() {
                  >
                     <div className="flex justify-between items-center relative z-10">
                        <div>
-                          {/* REAL DATA DISPLAY */}
                           <div className="flex items-center gap-2 mb-1">
                              <Flame size={12} className={activeTarget.lat === target.lat ? "text-white" : "text-orange-500"} />
                              <p className="text-xs font-black uppercase tracking-wider">
-                                Intensity: {target.brightness.toFixed(0)}K
+                                Zone {idx + 1}: {target.brightness.toFixed(0)}K
                              </p>
                           </div>
-                          <p className="text-[10px] font-mono opacity-80">
-                             {target.lat.toFixed(4)}, {target.lon.toFixed(4)}
-                          </p>
+                          <p className="text-[10px] font-mono opacity-80">{target.lat.toFixed(4)}, {target.lon.toFixed(4)}</p>
                        </div>
                        {activeTarget.lat === target.lat && <CheckCircle2 size={16} className="animate-bounce"/>}
                     </div>
@@ -205,47 +231,21 @@ export default function DroneController() {
           <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: `radial-gradient(${status === 'ACTIVE' ? '#22c55e' : '#ef4444'} 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
           
           {status === 'ACTIVE' ? (
-             /* 🎥 VIDEO MODE */
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full relative bg-black">
-                
-                {/* 🟢 EMPTY VIDEO TAG FOR YOU */}
-                <video 
-                    ref={videoRef}
-                    className="w-full h-full object-cover" 
-                    muted 
-                    loop 
-                    playsInline
-                    controls
-                    // src={DRONE_VIDEO_URL} // Add this when you have a link
-                >
-                    <source src={DRONE_VIDEO_URL} type="video/mp4" />
-                </video>
-
+                <iframe className="w-full h-full object-cover pointer-events-none" src={YOUTUBE_EMBED_URL} title="Drone Feed" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                 <div className="absolute top-4 left-4 flex gap-2"><span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded animate-pulse flex items-center gap-1"><Video size={12}/> REC</span></div>
+                <div className="absolute top-4 right-4"><button onClick={handleStop} className="bg-slate-900/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-white/20 flex items-center gap-2 transition-all shadow-lg"><Square size={12} fill="currentColor" /> RETURN TO BASE</button></div>
              </motion.div>
           ) : (
-             /* HUD MODE */
              <div className="flex-1 flex flex-col items-center justify-center relative z-10">
                 <div className={`w-[250px] h-[250px] border border-current rounded-full flex items-center justify-center relative transition-colors duration-500 ${status === 'ACTIVE' ? 'text-green-500 animate-pulse' : 'text-red-500'}`}>
                    <div className="absolute inset-0 border-t-2 border-current rounded-full animate-spin-slow opacity-50"></div>
                    <div className="absolute inset-4 border-b-2 border-current rounded-full animate-spin-reverse opacity-30"></div>
                    <Crosshair size={32} className="opacity-80"/>
                 </div>
-                
-                {/* 🟢 ANIMATED PLANE LOGO */}
-                <motion.div 
-                    className="absolute"
-                    initial={{ scale: 1 }}
-                    animate={
-                        status === 'DEPLOYING' 
-                        ? { scale: [1, 0.8, 50], opacity: [1, 1, 0], rotate: [0, -10, 0] } 
-                        : { y: [0, -10, 0] }
-                    }
-                    transition={{ duration: status === 'DEPLOYING' ? 3 : 2, ease: "easeInOut" }}
-                >
+                <motion.div className="absolute" initial={{ scale: 1 }} animate={status === 'DEPLOYING' ? { scale: [1, 0.8, 50], opacity: [1, 1, 0], rotate: [0, -10, 0] } : { y: [0, -10, 0] }} transition={{ duration: status === 'DEPLOYING' ? 3 : 2, ease: "easeInOut" }}>
                    <Plane size={80} className={`transition-colors duration-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] ${status === 'ACTIVE' ? 'text-green-500' : 'text-slate-800 dark:text-white'}`} />
                 </motion.div>
-                
                 <div className="absolute bottom-10 w-full px-10 text-center">
                    {status === 'STANDBY' ? (
                       <button onClick={handleDeploy} className="w-full bg-red-600 hover:bg-red-700 text-white py-5 rounded-2xl font-black text-xl tracking-[0.2em] shadow-[0_0_40px_rgba(220,38,38,0.4)] hover:scale-[1.02] transition-all">DEPLOY TO SECTOR</button>
@@ -260,17 +260,44 @@ export default function DroneController() {
           )}
         </div>
 
-        {/* RIGHT: TELEMETRY & ACTIONS */}
-        <div className="lg:col-span-3 space-y-4">
-           <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-white/10 space-y-4 shadow-sm">
-              <h3 className="text-xs font-bold uppercase text-slate-400">Live Telemetry</h3>
-              <TelemetryItem icon={<Wind/>} label="Wind Speed" value="12 KN" color="text-blue-500" />
-              <TelemetryItem icon={<Thermometer/>} label="Temperature" value="42°C" color="text-orange-500" />
-              <TelemetryItem icon={<Battery/>} label="Battery" value="98%" color="text-green-500" />
-              <TelemetryItem icon={<MapPin/>} label="Distance" value="4.2 KM" color="text-purple-500" />
-           </div>
+        {/* RIGHT: MINI-MAP (Replaces Telemetry) */}
+        <div className="lg:col-span-3 flex flex-col gap-4 h-full">
            
-           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/30 p-6 rounded-3xl text-center shadow-lg">
+           {/* 🟢 MINI-MAP CONTAINER */}
+           <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-lg">
+              
+              {/* Header */}
+              <div className="absolute top-0 left-0 right-0 z-10 bg-slate-900/90 backdrop-blur p-3 flex justify-between items-center border-b border-white/10">
+                 <div className="flex items-center gap-2">
+                    <MapIcon size={14} className="text-blue-400"/>
+                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">Target Vector</span>
+                 </div>
+                 <span className="text-[9px] font-mono text-green-400">SAT-LINK: ACTIVE</span>
+              </div>
+
+              {/* The Map */}
+              <div className="w-full h-full bg-slate-800 relative">
+                 {mapLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-500 gap-2">
+                       <RefreshCw className="animate-spin" size={20}/> Loading Map...
+                    </div>
+                 ) : mapHtml ? (
+                    <iframe srcDoc={mapHtml} className="w-full h-full border-none opacity-80 hover:opacity-100 transition-opacity" title="Mini Map" />
+                 ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-xs">Map Offline</div>
+                 )}
+                 
+                 {/* 🟢 OVERLAY: Drone Heading Vector */}
+                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="w-32 h-32 border-2 border-dashed border-red-500/30 rounded-full animate-pulse flex items-center justify-center">
+                       <Navigation size={24} className="text-red-500 rotate-45 drop-shadow-lg" fill="currentColor"/>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           {/* Emergency Action */}
+           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/30 p-6 rounded-3xl text-center shadow-lg shrink-0">
               <AlertTriangle size={32} className="mx-auto text-red-600 dark:text-red-500 mb-2 animate-pulse" />
               <h3 className="font-bold text-red-700 dark:text-red-400 mb-4">Command Override</h3>
               <button onClick={handleEmergencyCall} className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-red-500/30 transition-all animate-bounce"><PhoneCall size={18} /> CALL FIRE DEPT</button>
@@ -278,15 +305,6 @@ export default function DroneController() {
         </div>
 
       </div>
-    </div>
-  )
-}
-
-function TelemetryItem({ icon, label, value, color }) {
-  return (
-    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-black/40 rounded-xl border border-slate-100 dark:border-white/5">
-      <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">{icon}<span className="text-xs font-bold uppercase">{label}</span></div>
-      <span className={`font-mono font-bold ${color}`}>{value}</span>
     </div>
   )
 }
