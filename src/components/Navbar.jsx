@@ -3,10 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ShieldAlert, LayoutDashboard, Plane, FolderOpen, User, 
-  LogOut, Bell, CheckCircle2 
+  LogOut, Bell 
 } from 'lucide-react'
 import { supabase } from '../Supabase/supabase'
-import ThemeToggle from './ThemeToggle' // 👈 Import Toggle
+import ThemeToggle from './ThemeToggle'
 
 export default function Navbar({ session }) {
   const location = useLocation()
@@ -31,16 +31,16 @@ export default function Navbar({ session }) {
     <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 px-6 py-4 transition-colors duration-300">
       <div className="max-w-[1800px] mx-auto flex justify-between items-center">
         
-        {/* LOGO */}
-        <div className="flex items-center gap-3">
-          <div className="bg-red-600 p-2 rounded-lg text-white shadow-lg shadow-red-500/30">
+        {/* LOGO - Now Clickable */}
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="bg-red-600 p-2 rounded-lg text-white shadow-lg shadow-red-500/30 group-hover:scale-105 transition-transform duration-300">
             <ShieldAlert size={24} />
           </div>
           <div className="hidden md:block">
-            <h1 className="text-xl font-black tracking-tighter italic leading-none text-slate-900 dark:text-white">FIREWATCH</h1>
+            <h1 className="text-xl font-black tracking-tighter italic leading-none text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors">FIREWATCH</h1>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] leading-none">Global Defense</p>
           </div>
-        </div>
+        </Link>
 
         {/* CENTER LINKS */}
         <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-full p-1 border border-slate-200 dark:border-white/5 backdrop-blur-sm transition-colors duration-300">
@@ -70,7 +70,6 @@ export default function Navbar({ session }) {
         {/* RIGHT ACTIONS */}
         <div className="flex items-center gap-4">
           
-          {/* 🆕 THEME TOGGLE */}
           <ThemeToggle />
 
           {/* Notifications */}
