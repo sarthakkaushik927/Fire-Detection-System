@@ -1,1 +1,47 @@
 @import "tailwindcss";
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a; 
+}
+::-webkit-scrollbar-thumb {
+  background: #334155; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569; 
+}
+
+/* Drone Scanner Animation */
+@keyframes scan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+  animation: scan 3s linear infinite;
+  z-index: 20;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark-glass {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
