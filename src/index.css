@@ -45,3 +45,36 @@
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+:root {
+  /* LIGHT MODE COLORS (Default) */
+  --bg-primary: #020617;      /* White */
+  --bg-secondary: #0f172a;    /* Slate-100 */
+  --text-primary: #0f172a;    /* Slate-900 */
+  --text-secondary: #64748b;  /* Slate-500 */
+  --border-color: #e2e8f0;    /* Slate-200 */
+  --card-bg: #ffffff;
+}
+
+/* DARK MODE OVERRIDES */
+.dark {
+  --bg-primary: #020617;      /* Slate-950 */
+  --bg-secondary: #0f172a;    /* Slate-900 */
+  --text-primary: #ffffff;    /* White */
+  --text-secondary: #94a3b8;  /* Slate-400 */
+  --border-color: #1e293b;    /* Slate-800 */
+  --card-bg: #0f172a;         /* Slate-900 */
+}
+
+/* GLOBAL TRANSITION */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+/* 👇 THIS IS THE MISSING LINK */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Global Styles */
+@layer base {
+  body {
+    @apply transition-colors duration-300;
+  }
+}

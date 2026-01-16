@@ -2,30 +2,31 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './Supabase/supabase'
 import { Loader2 } from 'lucide-react'
+import { ThemeProvider } from './context/ThemeContext' // 👈 Import Provider
 
 // Components
 import LandingPage from './components/LandingPage'
 import AuthScreen from './components/AuthScreen'
 import Dashboard from './components/Dashboard'
+import AccountPage from './components/AccountPage'
+import DroneController from './components/DroneController'
+import DownloadsPage from './components/DownloadsPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import Layout from './components/Layout'
 
 export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 1. Check active session on load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
     })
-
-    // 2. Listen for login/logout events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setLoading(false)
     })
-
     return () => subscription.unsubscribe()
   }, [])
 
@@ -38,27 +39,20 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Landing Page */}
-        <Route path="/" element={<LandingPage />} />
+    <ThemeProvider> {/* 👈 Wrap everything here */}
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={!session ? <AuthScreen /> : <Navigate to="/dashboard" replace />} />
 
-        {/* Auth Page - Redirects to dashboard if already logged in */}
-        <Route 
-          path="/auth" 
-          element={!session ? <AuthScreen /> : <Navigate to="/dashboard" replace />} 
-        />
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={<ProtectedRoute session={session}><Layout session={session}><Dashboard session={session}/></Layout></ProtectedRoute>}/>
+          <Route path="/account" element={<ProtectedRoute session={session}><Layout session={session}><AccountPage session={session}/></Layout></ProtectedRoute>}/>
+          <Route path="/drone-control" element={<ProtectedRoute session={session}><Layout session={session}><DroneController /></Layout></ProtectedRoute>}/>
+          <Route path="/downloads" element={<ProtectedRoute session={session}><Layout session={session}><DownloadsPage /></Layout></ProtectedRoute>}/>
 
-        {/* Protected Dashboard - Redirects to auth if not logged in */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute session={session}>
-              <Dashboard session={session} />
-            </ProtectedRoute>
-          } 
-        />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
