@@ -116,7 +116,7 @@ export default function LandingPage() {
         {/* Scroll Indicator */}
         <motion.div 
            style={{ opacity: useTransform(scrollY, [0, 200], [1, 0]) }}
-           className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-500"
+           className="absolute bottom-10 left-1/2 -translate-x-1/2 translate-y-8 flex flex-col items-center gap-2 text-slate-500"
         >
            <span className="text-[10px] uppercase tracking-widest">Scroll to Initiate</span>
            <ChevronDown className="animate-bounce" />
