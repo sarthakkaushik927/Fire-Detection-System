@@ -9,7 +9,7 @@ import { supabase } from '../../Supabase/supabase'
 import toast, { Toaster } from 'react-hot-toast' // 🟢 IMPORT TOAST
 
 // 🟢 NEW KRYPTONITE BACKEND
-const BACKEND_PROXY = "https://kryptonite-8k3u.vercel.app"
+const BACKEND_PROXY = "https://keryptonite-8k3u.vercel.app"
 
 export default function Complaints() {
   const navigate = useNavigate()

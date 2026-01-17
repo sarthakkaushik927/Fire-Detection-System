@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 
 // 🟢 NEW KRYPTONITE BACKEND
-const BACKEND_PROXY = "https://kryptonite-8k3u.vercel.app"
+const BACKEND_PROXY = "https://keryptonite-8k3u.vercel.app"
 
 const REGIONS = {
   india: ["up", "mp", "maharashtra"]
