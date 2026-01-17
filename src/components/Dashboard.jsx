@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useDroneStream } from '../hooks/useDroneStream'
+// Removed useDroneStream import
 import { saveImage } from '../utils/db'
 import { 
   Map as MapIcon, Plane, Radio, RefreshCw, Upload, 
@@ -9,9 +9,9 @@ import {
   Loader2, Cloud, Wind, Droplets, AlertTriangle, MapPin
 } from 'lucide-react'
 
-// 🟢 LIVE EC2 CONFIGURATION
-const BACKEND_URL = "http://54.196.216.231:8000"
-const WS_URL =  "ws://54.196.216.231:8000/ws/drone"
+// 🟢 NEW CONFIG: Use local proxy path '/api'
+// Vercel will forward this to http://54.196.216.231:8000 automatically
+const BACKEND_PROXY = "/api"
 
 const REGIONS = {
   india: ["up", "mp", "maharashtra"]
@@ -67,8 +67,8 @@ export default function Dashboard({ session }) {
   const [highRiskPoints, setHighRiskPoints] = useState([]) 
   const [riskLoading, setRiskLoading] = useState(false)
 
-  // Drone State
-  const { frame: liveFrame, isConnected } = useDroneStream(WS_URL)
+  // Drone State (NO WEBSOCKET)
+  // We removed the live stream hook. Simulation still works.
   const [simulatedFrame, setSimulatedFrame] = useState(null)
   const [simLoading, setSimLoading] = useState(false)
 
@@ -76,7 +76,8 @@ export default function Dashboard({ session }) {
   const fetchMap = async () => {
     setMapLoading(true)
     try {
-      const res = await fetch(`${BACKEND_URL}/get_locations`, { 
+      // 🟢 Uses /api proxy
+      const res = await fetch(`${BACKEND_PROXY}/get_locations`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: selectedCountry, state: selectedState, day_range: 3 })
@@ -87,11 +88,12 @@ export default function Dashboard({ session }) {
     finally { setMapLoading(false) }
   }
 
-  // 2. Fetch High Risk Points (Data for Drone/List)
+  // 2. Fetch High Risk Points
   const fetchHighRiskData = async () => {
     setRiskLoading(true)
     try {
-      const res = await fetch(`${BACKEND_URL}/get_hight_regions_area`, { 
+      // 🟢 Uses /api proxy
+      const res = await fetch(`${BACKEND_PROXY}/get_hight_regions_area`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: selectedCountry, state: selectedState, day_range: 3 })
@@ -139,7 +141,8 @@ export default function Dashboard({ session }) {
     const formData = new FormData()
     formData.append('file', file)
     try {
-      const response = await fetch(`${BACKEND_URL}/draw_boxes_fire`, { method: 'POST', body: formData })
+      // 🟢 Uses /api proxy
+      const response = await fetch(`${BACKEND_PROXY}/draw_boxes_fire`, { method: 'POST', body: formData })
       const result = await response.json()
       if (result.data) setSimulatedFrame(`data:image/jpeg;base64,${result.data}`)
     } catch (err) { alert("Simulation failed.") } 
@@ -147,9 +150,8 @@ export default function Dashboard({ session }) {
   }
 
   const handleSaveCapture = async () => {
-    const frameToSave = simulatedFrame || liveFrame
-    if (frameToSave) {
-      await saveImage(frameToSave, { type: 'simulation' })
+    if (simulatedFrame) {
+      await saveImage(simulatedFrame, { type: 'simulation' })
       alert("Image Saved to Gallery!")
     }
   }
@@ -163,7 +165,8 @@ export default function Dashboard({ session }) {
     navigate('/drone-control', { state: { target: target, allTargets: highRiskPoints } })
   }
 
-  const displayFrame = simulatedFrame || liveFrame
+  // Display only simulated frame since we removed WS
+  const displayFrame = simulatedFrame
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }
   const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }
 
@@ -218,13 +221,13 @@ export default function Dashboard({ session }) {
            <div className="absolute inset-0 pointer-events-none z-10 p-6 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                  <div className="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
-                    <Radio size={12} className={isConnected || simulatedFrame ? 'text-green-500 animate-pulse' : 'text-slate-500'} />
-                    <span className="text-[10px] font-mono font-bold text-white uppercase">{simulatedFrame ? 'SIM_MODE' : isConnected ? 'LIVE_UPLINK' : 'OFFLINE'}</span>
+                    <Radio size={12} className={simulatedFrame ? 'text-green-500 animate-pulse' : 'text-slate-500'} />
+                    <span className="text-[10px] font-mono font-bold text-white uppercase">{simulatedFrame ? 'SIM_MODE' : 'OFFLINE'}</span>
                  </div>
                  {simulatedFrame && <button onClick={() => setSimulatedFrame(null)} className="pointer-events-auto bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-md transition"><X size={14} /></button>}
               </div>
            </div>
-           {(simLoading || isConnected) && <div className="scan-line"></div>}
+           {simLoading && <div className="scan-line"></div>}
            {displayFrame && (
              <div className="absolute bottom-6 right-6 z-20 flex gap-2 pointer-events-auto">
                <button onClick={handleSaveCapture} className="p-2 bg-white/10 hover:bg-blue-600 text-white rounded-lg backdrop-blur-md transition border border-white/5"><Download size={18} /></button>
