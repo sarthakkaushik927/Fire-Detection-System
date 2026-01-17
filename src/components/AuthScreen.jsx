@@ -1,96 +1,94 @@
-import { useState } from 'react'
-import { supabase } from '../Supabase/supabase'
-import { ShieldAlert, Mail, ArrowRight, Zap } from 'lucide-react'
-import { motion } from 'framer-motion'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Shield, ChevronRight, Loader2, ArrowLeft } from 'lucide-react'
 
-export default function AuthScreen() {
+export default function AuthScreen({ onLogin }) {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const handleGoogleLogin = () => {
-    supabase.auth.signInWithOAuth({ 
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    })
-  }
-
-  const handleMagicLink = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault()
     setLoading(true)
-    const { error } = await supabase.auth.signInWithOtp({ email })
-    if (error) alert(error.message)
-    else alert('✨ Magic Link Sent!')
-    setLoading(false)
+
+    // SIMULATED AUTH DELAY
+    setTimeout(() => {
+      // 🔐 HARDCODED CREDENTIALS (admin / admin123)
+      // This matches the logic in App.jsx to unlock the ProtectedRoute
+      if (email === 'admin' && password === 'admin123') {
+        onLogin({ name: 'Commander', role: 'admin' }) // Updates User State in App.jsx
+        navigate('/dashboard') // Redirects to Dashboard
+      } else {
+        alert('ACCESS DENIED: Invalid Credentials')
+        setLoading(false)
+      }
+    }, 1500)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 relative overflow-hidden">
-      {/* Animated Background Blobs */}
-      <motion.div 
-        animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
-        transition={{ duration: 20, repeat: Infinity }}
-        className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-red-600/20 rounded-full blur-[120px]"
-      />
-      <motion.div 
-        animate={{ scale: [1, 1.5, 1], rotate: [0, -90, 0] }}
-        transition={{ duration: 15, repeat: Infinity }}
-        className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]"
-      />
-
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white/5 backdrop-blur-2xl p-8 rounded-[2rem] border border-white/10 shadow-2xl relative z-10"
+    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white flex items-center justify-center p-6 relative overflow-hidden">
+      
+      {/* 🟢 NEW: Back to Home Button */}
+      <button 
+        onClick={() => navigate('/')} 
+        className="absolute top-6 left-6 flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors font-bold uppercase text-xs tracking-widest z-50"
       >
+        <ArrowLeft size={16} /> Return to Base
+      </button>
+
+      {/* Background Decor */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ef4444 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+      <div className="absolute -top-20 -left-20 w-96 h-96 bg-red-500/20 rounded-full blur-[100px]"></div>
+
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl relative z-10">
+        
         <div className="text-center mb-8">
-          <motion.div 
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            className="w-20 h-20 bg-gradient-to-tr from-red-600 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-500/30"
-          >
-            <ShieldAlert className="text-white" size={40} />
-          </motion.div>
-          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">FIREWATCH <span className="text-red-500">PRO</span></h1>
-          <p className="text-slate-400 font-medium">Next-Gen Emergency Response</p>
+          <div className="w-16 h-16 bg-red-600 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-red-500/30">
+            <Shield size={32} className="text-white" />
+          </div>
+          <h1 className="text-2xl font-black uppercase tracking-widest">Command Access</h1>
+          <p className="text-slate-500 text-xs font-bold uppercase mt-2">Restricted Area • Authorized Personnel Only</p>
         </div>
 
-        <motion.button 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleGoogleLogin}
-          className="w-full group bg-white text-slate-900 p-4 rounded-xl font-bold flex items-center justify-center gap-3 mb-6 hover:shadow-xl hover:shadow-white/10 transition-all"
-        >
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="G" className="w-5 h-5"/>
-          Continue with Google
-          <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all transform -translate-x-2 group-hover:translate-x-0"/>
-        </motion.button>
-
-        <div className="relative mb-6 text-center">
-          <span className="bg-[#0f1523] px-3 text-xs font-bold text-slate-500 uppercase tracking-widest">or access via email</span>
-        </div>
-
-        <form onSubmit={handleMagicLink} className="space-y-3">
-          <div className="relative group">
-            <Mail className="absolute left-4 top-4 text-slate-500 group-focus-within:text-red-400 transition-colors" size={20} />
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Operator ID</label>
             <input 
-              className="w-full bg-white/5 border border-white/10 p-4 pl-12 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all" 
-              type="email" 
-              placeholder="operator@firewatch.pro" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required
+              type="text" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-100 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-mono text-sm focus:outline-none focus:border-red-500 transition-colors"
+              placeholder="Enter ID (admin)"
             />
           </div>
-          <motion.button 
-            whileHover={{ scale: 1.02, backgroundColor: "rgba(239, 68, 68, 0.2)" }}
-            whileTap={{ scale: 0.98 }}
+          
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Passcode</label>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-slate-100 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-mono text-sm focus:outline-none focus:border-red-500 transition-colors"
+              placeholder="•••••••• (admin123)"
+            />
+          </div>
+
+          <button 
+            type="submit" 
             disabled={loading}
-            className="w-full bg-red-600/10 border border-red-500/50 text-red-400 p-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:text-white transition-all"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest py-4 rounded-xl shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 mt-4"
           >
-            {loading ? <Zap className="animate-spin" size={18} /> : <Zap size={18} />}
-            {loading ? 'Authenticating...' : 'Send Magic Link'}
-          </motion.button>
+            {loading ? <Loader2 className="animate-spin" /> : <>Initialize Uplink <ChevronRight size={16}/></>}
+          </button>
         </form>
-      </motion.div>
+
+        <div className="mt-6 text-center">
+          <p className="text-[10px] text-slate-400 font-mono">
+            SECURE CONNECTION: <span className="text-green-500">ENCRYPTED</span>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

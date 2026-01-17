@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-// Removed useDroneStream import
-import { saveImage } from '../utils/db'
+// 🟢 FIX 1: Correct path to utils (Go up 1 level)
+import { saveImage } from '../utils/db' 
+// 🟢 FIX 2: Correct path to Supabase (Go up 1 level)
+import { supabase } from '../Supabase/supabase' 
+
 import { 
   Map as MapIcon, Plane, Radio, RefreshCw, Upload, 
-  X, Activity, Layers, Download, FolderOpen, 
-  Loader2, Cloud, Wind, Droplets, AlertTriangle, MapPin
+  X, Layers, Download, FolderOpen, 
+  Loader2, Cloud, Wind, Droplets, AlertTriangle, MapPin, 
+  User, CheckCircle2, XCircle, BellRing
 } from 'lucide-react'
 
-// 🟢 NEW CONFIG: Use local proxy path '/api'
-// Vercel will forward this to http://54.196.216.231:8000 automatically
+// 🟢 PROXY CONFIG
 const BACKEND_PROXY = "/api"
 
 const REGIONS = {
@@ -54,7 +57,7 @@ function WeatherWidget() {
 }
 
 // --- MAIN DASHBOARD ---
-export default function Dashboard({ session }) {
+export default function Dashboard() {
   const navigate = useNavigate()
   
   // Region State
@@ -67,16 +70,17 @@ export default function Dashboard({ session }) {
   const [highRiskPoints, setHighRiskPoints] = useState([]) 
   const [riskLoading, setRiskLoading] = useState(false)
 
-  // Drone State (NO WEBSOCKET)
-  // We removed the live stream hook. Simulation still works.
+  // Drone State
   const [simulatedFrame, setSimulatedFrame] = useState(null)
   const [simLoading, setSimLoading] = useState(false)
 
-  // 1. Fetch Map Data (Visual)
+  // 🟢 REALTIME REPORTS STATE
+  const [userReports, setUserReports] = useState([])
+
+  // 1. Fetch Map
   const fetchMap = async () => {
     setMapLoading(true)
     try {
-      // 🟢 Uses /api proxy
       const res = await fetch(`${BACKEND_PROXY}/get_locations`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,11 +92,10 @@ export default function Dashboard({ session }) {
     finally { setMapLoading(false) }
   }
 
-  // 2. Fetch High Risk Points
+  // 2. Fetch High Risk Points (Satellite)
   const fetchHighRiskData = async () => {
     setRiskLoading(true)
     try {
-      // 🟢 Uses /api proxy
       const res = await fetch(`${BACKEND_PROXY}/get_hight_regions_area`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,13 +104,7 @@ export default function Dashboard({ session }) {
       const result = await res.json()
       
       if (result.data) {
-        let parsedData;
-        if (typeof result.data === 'string') {
-           parsedData = JSON.parse(result.data)
-        } else {
-           parsedData = result.data
-        }
-
+        let parsedData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data
         if (parsedData && parsedData.latitude) {
           const rows = Object.keys(parsedData.latitude).map(key => ({
             lat: parsedData.latitude[key],
@@ -128,12 +125,42 @@ export default function Dashboard({ session }) {
     }
   }
 
+  // 🟢 3. SUPABASE REALTIME LISTENER
+  useEffect(() => {
+    // A. Fetch existing pending reports
+    const fetchReports = async () => {
+      const { data } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('status', 'pending') // Only show pending
+        .order('created_at', { ascending: false })
+      if(data) setUserReports(data)
+    }
+    fetchReports()
+
+    // B. Listen for NEW reports
+    const channel = supabase
+      .channel('public:reports')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+            setUserReports(prev => [payload.new, ...prev])
+        } else if (payload.eventType === 'UPDATE') {
+            // Remove from list if status changes from pending
+            if (payload.new.status !== 'pending') {
+                setUserReports(prev => prev.filter(r => r.id !== payload.new.id))
+            }
+        }
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
+  }, [])
+
   useEffect(() => {
     fetchHighRiskData()
     fetchMap()
   }, [selectedCountry, selectedState])
 
-  // 3. Simulation Upload
   const handleSimulationUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -141,19 +168,11 @@ export default function Dashboard({ session }) {
     const formData = new FormData()
     formData.append('file', file)
     try {
-      // 🟢 Uses /api proxy
       const response = await fetch(`${BACKEND_PROXY}/draw_boxes_fire`, { method: 'POST', body: formData })
       const result = await response.json()
       if (result.data) setSimulatedFrame(`data:image/jpeg;base64,${result.data}`)
     } catch (err) { alert("Simulation failed.") } 
     finally { setSimLoading(false) }
-  }
-
-  const handleSaveCapture = async () => {
-    if (simulatedFrame) {
-      await saveImage(simulatedFrame, { type: 'simulation' })
-      alert("Image Saved to Gallery!")
-    }
   }
 
   const deployDrone = (targetCoords) => {
@@ -165,7 +184,18 @@ export default function Dashboard({ session }) {
     navigate('/drone-control', { state: { target: target, allTargets: highRiskPoints } })
   }
 
-  // Display only simulated frame since we removed WS
+  // 🟢 ACTION HANDLERS
+  const handleVerify = async (report) => {
+    // 1. Update DB
+    await supabase.from('reports').update({ status: 'verified' }).eq('id', report.id)
+    // 2. Deploy Drone
+    deployDrone({ lat: report.latitude, lon: report.longitude })
+  }
+
+  const handleDismiss = async (id) => {
+    await supabase.from('reports').update({ status: 'false_alarm' }).eq('id', id)
+  }
+
   const displayFrame = simulatedFrame
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }
   const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }
@@ -183,20 +213,23 @@ export default function Dashboard({ session }) {
            <MapPin size={20} className="text-red-500" />
            <span className="font-bold uppercase text-sm tracking-widest">Target Region:</span>
         </div>
+        
         <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-lg font-bold uppercase text-xs focus:outline-none">
           {Object.keys(REGIONS).map(c => <option key={c} value={c}>{c}</option>)}
         </select>
+        
         <select value={selectedState} onChange={(e) => setSelectedState(e.target.value)} className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-lg font-bold uppercase text-xs focus:outline-none">
           {REGIONS[selectedCountry]?.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <div className="ml-auto flex items-center gap-2">
-           <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-500/10 px-3 py-1 rounded-full animate-pulse">{highRiskPoints.length} High Conf. Fires</span>
+        
+        <div className="flex items-center gap-2 ml-4">
+           <span className="text-xs font-bold text-red-500 bg-red-100 dark:bg-red-500/10 px-3 py-1 rounded-full animate-pulse">{highRiskPoints.length} Sat. Anomalies</span>
         </div>
       </div>
 
       {/* 🗺️ LEFT COLUMN: MAP */}
       <motion.section variants={itemVariants} className="col-span-12 lg:col-span-8 flex flex-col gap-6">
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden relative group h-[700px] transition-colors duration-300">
+        <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden relative group h-[800px] transition-colors duration-300">
            <div className="absolute top-6 left-6 z-10 bg-white/90 dark:bg-slate-950/80 backdrop-blur px-4 py-2 rounded-full flex items-center gap-3 border border-slate-200 dark:border-white/10 shadow-sm">
               <MapIcon className="text-blue-600 dark:text-blue-500" size={18} />
               <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Live Feed: {selectedState}, {selectedCountry}</span>
@@ -217,7 +250,9 @@ export default function Dashboard({ session }) {
       {/* 🎥 RIGHT COLUMN: DRONE & ANALYTICS */}
       <section className="col-span-12 lg:col-span-4 flex flex-col gap-6 h-full">
         <WeatherWidget />
-        <motion.div variants={itemVariants} className="bg-black rounded-[2rem] h-[300px] relative overflow-hidden shadow-2xl border-[4px] border-slate-800 shrink-0">
+        
+        {/* DRONE FEED */}
+        <motion.div variants={itemVariants} className="bg-black rounded-[2rem] h-[250px] relative overflow-hidden shadow-2xl border-[4px] border-slate-800 shrink-0">
            <div className="absolute inset-0 pointer-events-none z-10 p-6 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                  <div className="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
@@ -228,31 +263,84 @@ export default function Dashboard({ session }) {
               </div>
            </div>
            {simLoading && <div className="scan-line"></div>}
-           {displayFrame && (
-             <div className="absolute bottom-6 right-6 z-20 flex gap-2 pointer-events-auto">
-               <button onClick={handleSaveCapture} className="p-2 bg-white/10 hover:bg-blue-600 text-white rounded-lg backdrop-blur-md transition border border-white/5"><Download size={18} /></button>
-               <button onClick={() => navigate('/downloads')} className="p-2 bg-white/10 hover:bg-white hover:text-black text-white rounded-lg backdrop-blur-md transition border border-white/5"><FolderOpen size={18} /></button>
-             </div>
-           )}
            <div className="w-full h-full bg-black relative flex items-center justify-center">
              {simLoading ? <div className="text-center"><Loader2 className="text-orange-500 animate-spin mb-2 mx-auto" size={32} /><p className="text-orange-500 font-mono text-xs uppercase">Processing...</p></div> : displayFrame ? <img src={displayFrame} className="w-full h-full object-contain bg-black" alt="Feed" /> : <div className="text-center text-slate-800"><Plane size={48} className="mb-4 opacity-50 mx-auto" /><p className="font-mono text-xs uppercase tracking-widest">No Signal</p></div>}
            </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-white/10 flex-1 flex flex-col min-h-[300px] transition-colors">
-           <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-wide flex items-center gap-2"><AlertTriangle size={16} className="text-red-500"/> Active Threats</h3><span className="text-[10px] font-mono text-slate-500">SCANNED: {highRiskPoints.length}</span></div>
-           <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar mb-4 h-[100px]">
-             {riskLoading ? <div className="flex justify-center p-4"><Loader2 className="animate-spin text-slate-400"/></div> : highRiskPoints.length > 0 ? highRiskPoints.map((pt, idx) => (
-                 <div key={idx} onClick={() => deployDrone(pt)} className="group flex justify-between items-center p-3 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 cursor-pointer transition border border-transparent hover:border-red-500/30">
-                    <div><p className="text-xs font-bold text-slate-800 dark:text-slate-200">Zone {idx + 1}</p><p className="text-[10px] font-mono text-slate-500">{pt.lat.toFixed(4)}, {pt.lon.toFixed(4)}</p></div>
-                    <button className="bg-white dark:bg-black text-red-500 text-[10px] font-bold px-2 py-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">TARGET</button>
-                 </div>
-               )) : <p className="text-center text-xs text-slate-400 mt-4">No high confidence fires detected.</p>}
-           </div>
-           <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-white/5 mt-auto">
-              <button onClick={() => deployDrone()} className="col-span-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md uppercase tracking-wider"><Plane size={18} /> {highRiskPoints.length > 0 ? "Deploy to Primary" : "Deploy Scout"}</button>
-              <label className="col-span-2 flex items-center justify-center p-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl cursor-pointer hover:border-orange-500 hover:text-orange-500 transition text-slate-400 dark:text-slate-500 text-xs font-bold uppercase gap-2 group bg-slate-50 dark:bg-slate-900/50"><Upload size={14} className="group-hover:scale-110 transition-transform"/> Upload Sim Data<input type="file" className="hidden" onChange={handleSimulationUpload} accept="image/*" /></label>
-           </div>
+        {/* 🟢 NEW SECTION: CIVILIAN COMPLAINTS FEED */}
+        <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-white/10 flex-1 flex flex-col min-h-[400px] transition-colors relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500"></div>
+            
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-slate-800 dark:text-white text-sm uppercase tracking-wide flex items-center gap-2">
+                    <User size={16} className="text-orange-500"/> Civilian Reports
+                </h3>
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${userReports.length > 0 ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-100 dark:bg-white/10 text-slate-500'}`}>
+                    {userReports.length} LIVE
+                </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                {userReports.length > 0 ? userReports.map((report) => (
+                    <motion.div 
+                        key={report.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-200 dark:border-white/5 relative group"
+                    >
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                                <span className="text-[10px] font-mono text-slate-400">
+                                    {new Date(report.created_at).toLocaleTimeString()}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500 bg-slate-200 dark:bg-white/5 px-2 py-1 rounded">
+                                <MapPin size={10} /> {report.latitude.toFixed(3)}, {report.longitude.toFixed(3)}
+                            </div>
+                        </div>
+
+                        {report.image_url && (
+                            <div className="h-32 w-full rounded-lg overflow-hidden mb-3 bg-black relative">
+                                <img src={report.image_url} className="w-full h-full object-cover" alt="Evidence" />
+                            </div>
+                        )}
+
+                        <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mb-4">
+                            {report.description || "Suspicious smoke detected..."}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <button 
+                                onClick={() => handleVerify(report)}
+                                className="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
+                            >
+                                <CheckCircle2 size={12} /> Deploy Drone
+                            </button>
+                            <button 
+                                onClick={() => handleDismiss(report.id)}
+                                className="bg-slate-200 dark:bg-white/10 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
+                            >
+                                <XCircle size={12} /> Dismiss
+                            </button>
+                        </div>
+                    </motion.div>
+                )) : (
+                    <div className="text-center py-12 opacity-50">
+                        <BellRing size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+                        <p className="text-xs font-bold uppercase text-slate-400">All Sectors Clear</p>
+                    </div>
+                )}
+            </div>
+            
+            <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/5">
+                <label className="flex items-center justify-center p-3 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl cursor-pointer hover:border-orange-500 hover:text-orange-500 transition text-slate-400 dark:text-slate-500 text-xs font-bold uppercase gap-2 group bg-slate-50 dark:bg-slate-900/50">
+                    <Upload size={14} className="group-hover:scale-110 transition-transform"/> 
+                    {simLoading ? "Processing..." : "Upload Satellite Data (Sim)"}
+                    <input type="file" className="hidden" onChange={handleSimulationUpload} accept="image/*" />
+                </label>
+            </div>
         </motion.div>
       </section>
     </motion.main>

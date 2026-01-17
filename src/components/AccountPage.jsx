@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   User, Phone, MapPin, Briefcase, Activity, 
-  Save, X, Award, Terminal, TrendingUp, Mail 
+  Save, X, Award, Terminal, TrendingUp 
 } from 'lucide-react'
 import { supabase } from '../Supabase/supabase'
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -13,23 +13,28 @@ const PERF_DATA = [
   { name: 'May', success: 75 }, { name: 'Jun', success: 95 },
 ]
 
-export default function AccountPage({ session }) {
-  const [user, setUser] = useState(session.user)
+// 🟢 Now accepts the 'user' prop directly
+export default function AccountPage({ user }) {
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
+  
+  // 🟢 Safe Access: Works for both Supabase Auth and Simulated 'admin'
   const [formData, setFormData] = useState({
-    full_name: user.user_metadata?.full_name || '',
-    phone: user.user_metadata?.phone || '',
-    org: user.user_metadata?.org || 'FireWatch HQ',
-    location: user.user_metadata?.location || 'Unknown',
+    full_name: user?.user_metadata?.full_name || user?.name || 'Operator',
+    phone: user?.user_metadata?.phone || '+91-000-000-0000',
+    org: user?.user_metadata?.org || 'FireWatch HQ',
+    location: user?.user_metadata?.location || 'New Delhi, India',
   })
 
   const handleSave = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.updateUser({ data: formData })
-      if (error) throw error
-      setUser(data.user)
+      // If using real Supabase Auth
+      if (user?.id) {
+          const { error } = await supabase.auth.updateUser({ data: formData })
+          if (error) throw error
+      }
+      // Update local UI only for simulated user
       setIsEditing(false)
       alert("✅ Profile updated successfully")
     } catch (error) {
@@ -51,9 +56,9 @@ export default function AccountPage({ session }) {
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-white/10 text-center relative overflow-hidden shadow-xl transition-colors duration-300">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-orange-500"></div>
           <div className="w-32 h-32 rounded-full mx-auto mb-6 p-1 bg-gradient-to-tr from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800">
-             <img src={user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${user.email}&background=0f172a&color=fff`} className="w-full h-full rounded-full object-cover" alt="Profile"/>
+             <img src={`https://ui-avatars.com/api/?name=${formData.full_name}&background=0f172a&color=fff`} className="w-full h-full rounded-full object-cover" alt="Profile"/>
           </div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white transition-colors">{formData.full_name || 'Operator'}</h2>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white transition-colors">{formData.full_name}</h2>
           <p className="text-sm font-bold text-red-500 uppercase tracking-widest mb-6">Level 4 Commander</p>
           
           <div className="grid grid-cols-2 gap-4 text-left">
@@ -131,7 +136,7 @@ export default function AccountPage({ session }) {
            </div>
         </div>
 
-        {/* Terminal Log (Always Dark) */}
+        {/* Terminal Log */}
         <div className="bg-slate-950 rounded-3xl p-6 border border-slate-800 font-mono text-xs shadow-inner">
            <div className="flex items-center gap-2 text-slate-500 mb-4 pb-2 border-b border-slate-800">
               <Terminal size={14} /> SYSTEM_LOGS.txt
@@ -141,7 +146,6 @@ export default function AccountPage({ session }) {
               <p><span className="text-blue-500">[INFO]</span> Connected to Satellite Uplink (VIIRS_SNPP).</p>
               <p><span className="text-yellow-500">[WARN]</span> Drone battery at 45% capacity.</p>
               <p><span className="text-blue-500">[INFO]</span> User session verified via OAuth provider.</p>
-              <p><span className="text-slate-600">[SYSTEM]</span> Kernel initialization sequence finished.</p>
            </div>
         </div>
 
