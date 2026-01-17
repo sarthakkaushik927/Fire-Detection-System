@@ -12,6 +12,7 @@ import RegistryCTA from './RegistryCTA'
 import Stats from './Stats'
 import LandingFooter from './LandingFooter'
 import ContactSection from './ContactSection'
+import Footer from './Footer'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -56,8 +57,8 @@ export default function LandingPage() {
       <RegistryCTA navigate={navigate} textEnter={textEnter} textLeave={textLeave} />
       <Stats />
       <ContactSection textEnter={textEnter} textLeave={textLeave} />
-      <LandingFooter navigate={navigate} textEnter={textEnter} textLeave={textLeave} />
-
+      \
+      <Footer navigate={navigate} textEnter={textEnter} textLeave={textLeave} animationProps={{ initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.8, delay: 0.2 } }} />
     </div>
   )
 }
