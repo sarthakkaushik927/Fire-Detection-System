@@ -11,7 +11,8 @@ import {
 // 🟢 YOUTUBE VIDEO URL
 const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/Z8_YeArWzD4?autoplay=1&mute=1&controls=0&loop=1&playlist=Z8_YeArWzD4"
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000"
+// 🟢 EC2 BACKEND CONFIGURATION
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://54.196.216.231:8000"
 
 // Fallback Presets
 const PRESET_LOCATIONS = [
@@ -67,15 +68,20 @@ export default function DroneController() {
       const result = await res.json()
       
       if (result.data) {
-        const parsedData = JSON.parse(result.data)
+        let parsedData;
+        if (typeof result.data === 'string') {
+           parsedData = JSON.parse(result.data)
+        } else {
+           parsedData = result.data
+        }
+
         const rows = Object.keys(parsedData.latitude).map(key => ({
-          
           lat: parsedData.latitude[key],
-          lon: parsedData.longitude[key],
+          lon: parsedData.longitude?.[key] || 0,
           brightness: parsedData.brightness?.[key] || 300,
           confidence: 'h'
         }))
-        console.log({result, parsedData, rows});
+        
         // Sort by intensity
         rows.sort((a, b) => b.brightness - a.brightness)
         setAllTargets(rows)
@@ -169,7 +175,6 @@ export default function DroneController() {
                  <p className="text-[9px] text-slate-400">LAST SCAN: {lastUpdated.toLocaleTimeString()}</p>
               </div>
               
-              {/* 🟢 REFRESH BUTTON */}
               <button 
                 onClick={fetchTargets} 
                 className="ml-auto p-1.5 bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-red-500 hover:text-white transition-colors"
@@ -263,31 +268,20 @@ export default function DroneController() {
         {/* RIGHT: MINI-MAP (Replaces Telemetry) */}
         <div className="lg:col-span-3 flex flex-col gap-4 h-full">
            
-           {/* 🟢 MINI-MAP CONTAINER */}
+           {/* MINI-MAP CONTAINER */}
            <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-lg">
-              
-              {/* Header */}
               <div className="absolute top-0 left-0 right-0 z-10 bg-slate-900/90 backdrop-blur p-3 flex justify-between items-center border-b border-white/10">
-                 <div className="flex items-center gap-2">
-                    <MapIcon size={14} className="text-blue-400"/>
-                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">Target Vector</span>
-                 </div>
+                 <div className="flex items-center gap-2"><MapIcon size={14} className="text-blue-400"/><span className="text-[10px] font-bold text-white uppercase tracking-wider">Target Vector</span></div>
                  <span className="text-[9px] font-mono text-green-400">SAT-LINK: ACTIVE</span>
               </div>
-
-              {/* The Map */}
               <div className="w-full h-full bg-slate-800 relative">
                  {mapLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-500 gap-2">
-                       <RefreshCw className="animate-spin" size={20}/> Loading Map...
-                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-500 gap-2"><RefreshCw className="animate-spin" size={20}/> Loading Map...</div>
                  ) : mapHtml ? (
                     <iframe srcDoc={mapHtml} className="w-full h-full border-none opacity-80 hover:opacity-100 transition-opacity" title="Mini Map" />
                  ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-xs">Map Offline</div>
                  )}
-                 
-                 {/* 🟢 OVERLAY: Drone Heading Vector */}
                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                     <div className="w-32 h-32 border-2 border-dashed border-red-500/30 rounded-full animate-pulse flex items-center justify-center">
                        <Navigation size={24} className="text-red-500 rotate-45 drop-shadow-lg" fill="currentColor"/>
@@ -296,7 +290,6 @@ export default function DroneController() {
               </div>
            </div>
 
-           {/* Emergency Action */}
            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/30 p-6 rounded-3xl text-center shadow-lg shrink-0">
               <AlertTriangle size={32} className="mx-auto text-red-600 dark:text-red-500 mb-2 animate-pulse" />
               <h3 className="font-bold text-red-700 dark:text-red-400 mb-4">Command Override</h3>
