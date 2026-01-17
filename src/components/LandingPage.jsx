@@ -79,6 +79,7 @@ export default function LandingPage() {
 
       {/* 🎬 HERO SECTION */}
       <header className="relative h-screen flex items-center justify-center overflow-hidden pt-24">
+        
         {/* Parallax Background */}
         <motion.div style={{ y: y1 }} className="absolute inset-0 z-0">
           <img 
@@ -89,6 +90,43 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
         </motion.div>
 
+        {/* 🔥 NEW: FLOWING LAVA EFFECT 🔥 */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            {/* Blob 1: Orange Heat */}
+            <motion.div 
+                animate={{ 
+                    x: [0, 100, -100, 0], 
+                    y: [0, -50, 50, 0],
+                    scale: [1, 1.2, 0.9, 1],
+                    opacity: [0.3, 0.5, 0.3]
+                }}
+                transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-orange-600 rounded-full blur-[120px] mix-blend-screen"
+            />
+            {/* Blob 2: Red Core */}
+            <motion.div 
+                animate={{ 
+                    x: [0, -150, 50, 0], 
+                    y: [0, 100, -50, 0],
+                    scale: [1, 1.3, 1],
+                    opacity: [0.4, 0.6, 0.4]
+                }}
+                transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-red-700 rounded-full blur-[150px] mix-blend-screen"
+            />
+            {/* Blob 3: Yellow Spark */}
+            <motion.div 
+                animate={{ 
+                    x: [0, 200, -50, 0], 
+                    y: [0, -200, 100, 0],
+                }}
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-yellow-600/30 rounded-full blur-[100px] mix-blend-overlay"
+            />
+            {/* Noise Overlay for Texture */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-soft-light"></div>
+        </div>
+
         {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-5xl">
           <motion.div 
@@ -96,16 +134,16 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.8 }}
           >
-            <div className="inline-block bg-red-600/10 border border-red-500/50 rounded-full px-4 py-1 mb-8">
+            <div className="inline-block bg-red-600/10 border border-red-500/50 rounded-full px-4 py-1 mb-8 backdrop-blur-sm">
               <span className="text-red-400 font-bold text-xs uppercase tracking-[0.2em] flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"/> AI-Powered Defense Matrix
               </span>
             </div>
-            <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight tracking-tight">
+            <h1 className="text-6xl md:text-8xl font-black mb-6 leading-tight tracking-tight drop-shadow-2xl">
               Predict. Detect. <br/> 
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 animate-gradient">Neutralize.</span>
             </h1>
-            <p className="text-xl md:text-2xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-slate-200 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-lg font-medium">
               The world's most advanced wildfire command center. Utilizing NASA satellite arrays and autonomous drone swarms to stop fires before they begin.
             </p>
             
@@ -113,15 +151,16 @@ export default function LandingPage() {
               <button 
                 onMouseEnter={textEnter} onMouseLeave={textLeave}
                 onClick={() => navigate('/auth')}
-                className="bg-red-600 text-white px-10 py-5 rounded-full font-bold text-lg flex items-center gap-3 hover:bg-red-700 transition shadow-[0_0_40px_rgba(220,38,38,0.4)] group cursor-none"
+                className="bg-red-600 text-white px-10 py-5 rounded-full font-bold text-lg flex items-center gap-3 hover:bg-red-700 transition shadow-[0_0_40px_rgba(220,38,38,0.4)] group cursor-none relative overflow-hidden"
               >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                 Launch Command Center
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button 
                 onMouseEnter={textEnter} onMouseLeave={textLeave}
                 onClick={() => navigate('/registry')}
-                className="px-10 py-5 rounded-full font-bold text-lg border border-white/20 hover:bg-white/5 transition cursor-none flex items-center gap-2"
+                className="px-10 py-5 rounded-full font-bold text-lg border border-white/20 hover:bg-white/10 backdrop-blur-sm transition cursor-none flex items-center gap-2"
               >
                 Report Incident <FileWarning size={18} />
               </button>
@@ -145,7 +184,7 @@ export default function LandingPage() {
           <motion.div 
             className="flex gap-24 whitespace-nowrap text-white font-mono font-black uppercase text-base tracking-[0.2em]"
             animate={{ x: ["0%", "-100%"] }}
-            transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 5, ease: "linear" }}
           >
             {[...Array(15)].map((_, i) => (
               <React.Fragment key={i}>
