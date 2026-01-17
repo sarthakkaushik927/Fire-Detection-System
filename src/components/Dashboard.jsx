@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { saveImage } from '../utils/db' 
 import { supabase } from '../../Supabase/supabase' 
+import toast, { Toaster } from 'react-hot-toast' // 🟢 IMPORT TOAST
 
 import { 
   Map as MapIcon, Plane, Radio, RefreshCw, Upload, 
@@ -86,7 +87,10 @@ export default function Dashboard() {
       })
       const data = await res.text() // API returns HTML string
       setMapHtml(data)
-    } catch (e) { console.error("Map fetch failed", e) }
+    } catch (e) { 
+        console.error("Map fetch failed", e) 
+        toast.error("Failed to load map data")
+    }
     finally { setMapLoading(false) }
   }
 
@@ -102,7 +106,6 @@ export default function Dashboard() {
       const result = await res.json()
       
       if (result.data) {
-        // Kryptonite might return pre-parsed JSON, check just in case
         let parsedData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data
         if (parsedData && parsedData.latitude) {
           const rows = Object.keys(parsedData.latitude).map(key => ({
@@ -141,6 +144,7 @@ export default function Dashboard() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, (payload) => {
         if (payload.eventType === 'INSERT') {
             setUserReports(prev => [payload.new, ...prev])
+            toast("New Civilian Report Received", { icon: '📡' })
         } else if (payload.eventType === 'UPDATE') {
             if (payload.new.status !== 'pending') {
                 setUserReports(prev => prev.filter(r => r.id !== payload.new.id))
@@ -162,36 +166,50 @@ export default function Dashboard() {
     const file = e.target.files[0]
     if (!file) return
     setSimLoading(true)
+    
+    // 🟢 Show Loading Toast
+    const toastId = toast.loading("Processing Satellite Imagery...")
+
     const formData = new FormData()
-    formData.append('image', file) // 👈 Changed to 'image'
+    formData.append('image', file) 
     try {
       const response = await fetch(`${BACKEND_PROXY}/api/fires/draw_boxes_fire`, { 
           method: 'POST', 
           body: formData 
       })
       const result = await response.json()
-      // 👈 Changed to 'image_base64'
-      if (result.image_base64) setSimulatedFrame(`data:image/${result.format || 'jpeg'};base64,${result.image_base64}`)
-    } catch (err) { alert("Simulation failed.") } 
+      
+      if (result.image_base64) {
+         setSimulatedFrame(`data:image/${result.format || 'jpeg'};base64,${result.image_base64}`)
+         toast.success("Simulation Loaded Successfully", { id: toastId })
+      } else {
+         toast("No anomalies detected in file", { id: toastId, icon: 'ℹ️' })
+      }
+    } catch (err) { 
+        toast.error("Simulation Upload Failed", { id: toastId }) 
+    } 
     finally { setSimLoading(false) }
   }
 
   const deployDrone = (targetCoords) => {
     const target = targetCoords || highRiskPoints[0]
     if (!target && highRiskPoints.length === 0) {
-      alert("No active fire targets detected.")
+      toast.error("No active fire targets detected for deployment")
       return
     }
+    toast.success("Drone Deployment Sequence Initiated")
     navigate('/drone-control', { state: { target: target, allTargets: highRiskPoints } })
   }
 
   const handleVerify = async (report) => {
     await supabase.from('reports').update({ status: 'verified' }).eq('id', report.id)
+    toast.success("Report Verified. Deploying Units.")
     deployDrone({ lat: report.latitude, lon: report.longitude })
   }
 
   const handleDismiss = async (id) => {
     await supabase.from('reports').update({ status: 'false_alarm' }).eq('id', id)
+    toast("Report Dismissed", { icon: '🗑️' })
   }
 
   const displayFrame = simulatedFrame
@@ -205,6 +223,9 @@ export default function Dashboard() {
       animate="visible"
       className="max-w-[1800px] mx-auto px-6 grid grid-cols-12 gap-6 pb-20"
     >
+      {/* 🟢 TOASTER COMPONENT */}
+      <Toaster position="bottom-right" toastOptions={{ style: { background: '#1e293b', color: '#fff' } }} />
+
       {/* 🌍 CONTROL BAR */}
       <div className="col-span-12 flex flex-col md:flex-row gap-4 items-center bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 transition-colors">
         <div className="flex items-center gap-2 text-slate-500">

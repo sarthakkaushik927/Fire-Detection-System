@@ -78,3 +78,24 @@ body {
     @apply transition-colors duration-300;
   }
 }
+.go3958317564 { /* This targets the toast container */
+  font-family: 'Courier New', Courier, monospace !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+/* Toast Body */
+div[role="status"] {
+  background: rgba(15, 23, 42, 0.9) !important; /* Dark Slate */
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 12px !important;
+}
+
+/* Success Icon Color */
+div[role="status"] svg {
+  filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.5));
+}

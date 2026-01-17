@@ -6,6 +6,7 @@ import {
   Loader2, ScanEye, Eye, EyeOff, Trash2, Siren, Crosshair
 } from 'lucide-react'
 import { supabase } from '../../Supabase/supabase' 
+import toast, { Toaster } from 'react-hot-toast' // 🟢 IMPORT TOAST
 
 // 🟢 NEW KRYPTONITE BACKEND
 const BACKEND_PROXY = "https://kryptonite-8k3u.vercel.app"
@@ -33,6 +34,7 @@ export default function Complaints() {
       setReports(data || [])
     } catch (error) {
       console.error("Error fetching reports:", error)
+      toast.error("Failed to load reports")
     } finally {
       setLoading(false)
     }
@@ -44,7 +46,10 @@ export default function Complaints() {
     const channel = supabase
       .channel('complaints-page')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, (payload) => {
-        if (payload.eventType === 'INSERT') setReports(prev => [payload.new, ...prev])
+        if (payload.eventType === 'INSERT') {
+            setReports(prev => [payload.new, ...prev])
+            toast("New Incident Reported", { icon: '🔥' })
+        }
         else if (payload.eventType === 'UPDATE') setReports(prev => prev.map(r => r.id === payload.new.id ? payload.new : r))
         else if (payload.eventType === 'DELETE') setReports(prev => prev.filter(r => r.id !== payload.old.id))
       })
@@ -54,6 +59,7 @@ export default function Complaints() {
 
   // 🟢 1. DEPLOY DRONE ACTION
   const handleDeployDrone = (report) => {
+    toast.success("Coordinates Locked. Initiating Drone Sequence.")
     navigate('/drone-control', { 
       state: { 
         target: { 
@@ -68,8 +74,10 @@ export default function Complaints() {
 
   // 🟢 2. AI SCAN LOGIC (UPDATED FOR KRYPTONITE API)
   const handleAnalyze = async (report) => {
-    if (!report.image_url) return alert("No image to analyze")
+    if (!report.image_url) return toast.error("No image evidence available")
+    
     setAnalyzingId(report.id)
+    const toastId = toast.loading("Analyzing thermal signatures...")
 
     try {
       // Fetch image and convert to File
@@ -78,7 +86,7 @@ export default function Complaints() {
       const file = new File([blob], "evidence.jpg", { type: "image/jpeg" })
       
       const formData = new FormData()
-      formData.append('image', file) // 👈 Changed from 'file' to 'image'
+      formData.append('image', file)
 
       // Send to Vercel Backend
       const response = await fetch(`${BACKEND_PROXY}/api/fires/draw_boxes_fire`, { 
@@ -87,24 +95,25 @@ export default function Complaints() {
       })
       const result = await response.json()
 
-      if (result.image_base64) { // 👈 Changed from 'data' to 'image_base64'
+      if (result.image_base64) {
         // Fire Found
         const base64Image = `data:image/${result.format || 'jpeg'};base64,${result.image_base64}`
         setAnalysisResults(prev => ({ ...prev, [report.id]: base64Image }))
         setViewMode(prev => ({ ...prev, [report.id]: 'ai' })) 
         setAiVerdict(prev => ({ ...prev, [report.id]: true })) 
         updateStatus(report.id, 'verified')
-        alert("⚠️ AI ALERT: Fire Detected! Ready for Drone Deployment.")
+        
+        toast.success("⚠️ DANGER: Fire Confirmed by AI", { id: toastId, duration: 5000 })
       } else {
         // Safe
         setAiVerdict(prev => ({ ...prev, [report.id]: false }))
         updateStatus(report.id, 'false_alarm')
-        alert("✅ AI RESULT: Safe. No fire detected.")
+        toast.success("✅ Analysis Complete: No Fire Detected", { id: toastId })
       }
 
     } catch (error) {
       console.error("AI Analysis Failed:", error)
-      alert("Failed to connect to Neural Engine. Is the backend running?")
+      toast.error("AI Analysis Failed: Server Offline?", { id: toastId })
     } finally {
       setAnalyzingId(null)
     }
@@ -112,8 +121,9 @@ export default function Complaints() {
 
   // 🟢 3. SMART EMAIL SENDER
   const handleSmartEmail = async (report) => {
-    if (!report.email) return alert("No email provided.")
+    if (!report.email) return toast.error("No email provided in report")
     setSendingEmail(true)
+    const toastId = toast.loading("Dispatching Alert...")
 
     const isFire = aiVerdict[report.id]
     const reportIdStr = String(report.id).slice(0, 6)
@@ -147,14 +157,14 @@ export default function Complaints() {
 
       if (!response.ok) {
         console.error("Email Error:", result)
-        alert("Failed to send email. Check console.")
-      } else {
-        alert(`Email sent: ${isFire ? "DANGER WARNING" : "FALSE ALARM NOTICE"}`)
-      }
+        throw new Error("API Error")
+      } 
+      
+      toast.success(isFire ? "🚨 DANGER Alert Sent" : "✅ Safe Notice Sent", { id: toastId })
 
     } catch (e) {
       console.error(e)
-      alert("Network Error: Failed to send email.")
+      toast.error("Failed to send email notification", { id: toastId })
     } finally {
       setSendingEmail(false)
     }
@@ -167,7 +177,8 @@ export default function Complaints() {
         const { error } = await supabase.from('reports').delete().eq('id', report.id)
         if (error) throw error
         setReports(prev => prev.filter(r => r.id !== report.id))
-    } catch (error) { console.error(error) }
+        toast.success("Report removed from registry")
+    } catch (error) { toast.error("Failed to delete report") }
   }
 
   const updateStatus = async (id, newStatus) => {
@@ -187,6 +198,9 @@ export default function Complaints() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black p-6 md:p-12 text-slate-900 dark:text-white">
+      {/* 🟢 TOASTER COMPONENT */}
+      <Toaster position="top-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
+
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
           <div>

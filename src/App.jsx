@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { ThemeProvider } from './context/ThemeContext'
+import { Toaster } from 'react-hot-toast' // 🟢 IMPORT GLOBAL TOASTER
 
 // --- 1. CORE COMPONENTS (src/components/) ---
 import Navbar from './components/Navbar'
@@ -18,7 +19,6 @@ import AboutUs from './components/Landing/AboutUs'
 import ComplaintRegistry from './components/Landing/ComplaintRegistry'
 
 // --- 3. ADMIN DASHBOARD COMPONENTS (src/components/dashboard/) ---
-// 🟢 This is the new page for Admins to view reports
 import Complaints from './components/dashboard/Complaints'
 
 const ProtectedRoute = ({ user, children }) => {
@@ -53,6 +53,39 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-white dark:bg-black text-slate-900 dark:text-white transition-colors duration-300">
+        
+        {/* 🟢 GLOBAL TOASTER CONFIGURATION (SCI-FI THEME) */}
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            className: '',
+            style: {
+              background: '#0f172a', // Dark Slate
+              color: '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '16px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              letterSpacing: '0.05em',
+              borderRadius: '12px',
+              boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5)',
+              fontFamily: 'monospace', // Sci-fi feel
+              textTransform: 'uppercase'
+            },
+            success: {
+              iconTheme: {
+                primary: '#22c55e', // Green-500
+                secondary: '#fff',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#ef4444', // Red-500
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
 
         {/* Admin Navbar (Only shows when logged in & not on a public page) */}
         {showAdminNavbar && (
@@ -74,7 +107,6 @@ function App() {
               <ProtectedRoute user={user}><Dashboard /></ProtectedRoute>
             } />
 
-            {/* 🟢 NEW: Admin Complaints Feed */}
             <Route path="/complaints" element={
               <ProtectedRoute user={user}><Complaints /></ProtectedRoute>
             } />

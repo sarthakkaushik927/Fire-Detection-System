@@ -7,20 +7,13 @@ import {
   Video, Maximize, Compass, LocateFixed, RefreshCw, Flame, Signal, 
   Square, Map as MapIcon, Navigation
 } from 'lucide-react'
+import toast, { Toaster } from 'react-hot-toast' // 🟢 IMPORT TOAST
 
 // 🟢 YOUTUBE VIDEO URL
 const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/Z8_YeArWzD4?autoplay=1&mute=1&controls=0&loop=1&playlist=Z8_YeArWzD4"
 
 // 🟢 NEW KRYPTONITE BACKEND
 const BACKEND_URL = "https://kryptonite-8k3u.vercel.app"
-
-// Fallback Presets
-const PRESET_LOCATIONS = [
-  { name: "New Delhi (HQ)", lat: 28.6139, lon: 77.2090 },
-  { name: "Mumbai Sector", lat: 19.0760, lon: 72.8777 },
-  { name: "Bangalore Unit", lat: 12.9716, lon: 77.5946 },
-  { name: "Lucknow Outpost", lat: 26.8467, lon: 80.9462 },
-]
 
 export default function DroneController() {
   const navigate = useNavigate()
@@ -48,6 +41,8 @@ export default function DroneController() {
   useEffect(() => {
     fetchTargets()
     fetchMapData()
+    // 🟢 Initial Toast
+    toast.success("Tactical Command Interface Loaded", { icon: '🚁' })
   }, [])
 
   // Sync Manual Inputs
@@ -56,9 +51,11 @@ export default function DroneController() {
     setManualLon(activeTarget.lon)
   }, [activeTarget])
 
-  // 🟢 FETCH TARGET LIST (Updated Endpoint)
+  // 🟢 FETCH TARGET LIST
   const fetchTargets = async () => {
     setLoadingTargets(true)
+    const toastId = toast.loading("Syncing Satellite Data...")
+    
     try {
       const res = await fetch(`${BACKEND_URL}/api/fires/get_height_regions_area`, { 
         method: 'POST',
@@ -82,7 +79,6 @@ export default function DroneController() {
           confidence: 'h'
         }))
         
-        // Sort by intensity
         rows.sort((a, b) => b.brightness - a.brightness)
         setAllTargets(rows)
         
@@ -90,15 +86,17 @@ export default function DroneController() {
           setActiveTarget(rows[0])
         }
         setLastUpdated(new Date())
+        toast.success("Targets Acquired", { id: toastId })
       }
     } catch (e) {
       console.error("Satellite Uplink Failed", e)
+      toast.error("Satellite Uplink Failed", { id: toastId })
     } finally {
       setLoadingTargets(false)
     }
   }
 
-  // 🟢 FETCH MINI-MAP HTML (Updated Endpoint)
+  // 🟢 FETCH MINI-MAP
   const fetchMapData = async () => {
     setMapLoading(true)
     try {
@@ -107,14 +105,17 @@ export default function DroneController() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: "india", state: "up", day_range: 3 })
       })
-      const data = await res.text() // API returns HTML string
+      const data = await res.text()
       setMapHtml(data)
-    } catch (e) { console.error("Map Fetch Error:", e) }
+    } catch (e) { 
+        console.error("Map Fetch Error:", e) 
+    }
     finally { setMapLoading(false) }
   }
 
   const handleDeploy = () => {
     setStatus('DEPLOYING')
+    toast("Engaging Rotors...", { icon: '⚙️' })
     let p = 0
     const interval = setInterval(() => {
       p += 1
@@ -122,6 +123,7 @@ export default function DroneController() {
       if (p >= 100) {
         clearInterval(interval)
         setStatus('ACTIVE')
+        toast.success("Drone Airborne & En Route", { duration: 5000 })
       }
     }, 30)
   }
@@ -129,14 +131,25 @@ export default function DroneController() {
   const handleStop = () => {
     setStatus('STANDBY')
     setProgress(0)
+    toast("Returning to Base", { icon: '🏠' })
   }
 
-  const handleManualUpdate = () => setActiveTarget({ lat: parseFloat(manualLat), lon: parseFloat(manualLon) })
-  const handleEmergencyCall = () => window.location.href = 'tel:+917060321453'
+  const handleManualUpdate = () => {
+    setActiveTarget({ lat: parseFloat(manualLat), lon: parseFloat(manualLon) })
+    toast.success("Manual Coordinates Locked")
+  }
+
+  const handleEmergencyCall = () => {
+      window.location.href = 'tel:+917060321453'
+      toast.error("Emergency Services Contacted", { duration: 4000 })
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white font-mono overflow-hidden relative transition-colors duration-300 flex flex-col">
       
+      {/* 🟢 TOASTER */}
+      <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
+
       <div className="absolute inset-0 z-0 opacity-10 dark:opacity-20 pointer-events-none" 
            style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
       </div>
@@ -165,7 +178,7 @@ export default function DroneController() {
       {/* MAIN CONTENT */}
       <div className="relative z-10 max-w-[1600px] mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 h-full overflow-hidden">
         
-        {/* LEFT: REAL DATA FEED (Scrollable & Refreshable) */}
+        {/* LEFT: REAL DATA FEED */}
         <div className="lg:col-span-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-3xl border border-slate-200 dark:border-white/10 p-4 flex flex-col h-full overflow-hidden shadow-lg">
            
            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200 dark:border-white/10">
@@ -184,7 +197,7 @@ export default function DroneController() {
               </button>
            </div>
 
-           {/* TARGET LIST (Scrollable) */}
+           {/* TARGET LIST */}
            <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar min-h-[150px]">
               {allTargets.length > 0 ? allTargets.map((target, idx) => (
                  <button
@@ -265,10 +278,8 @@ export default function DroneController() {
           )}
         </div>
 
-        {/* RIGHT: MINI-MAP (Replaces Telemetry) */}
+        {/* RIGHT: MINI-MAP */}
         <div className="lg:col-span-3 flex flex-col gap-4 h-full">
-           
-           {/* MINI-MAP CONTAINER */}
            <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-lg">
               <div className="absolute top-0 left-0 right-0 z-10 bg-slate-900/90 backdrop-blur p-3 flex justify-between items-center border-b border-white/10">
                  <div className="flex items-center gap-2"><MapIcon size={14} className="text-blue-400"/><span className="text-[10px] font-bold text-white uppercase tracking-wider">Target Vector</span></div>
