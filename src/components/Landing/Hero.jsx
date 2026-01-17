@@ -1,47 +1,118 @@
-import React from 'react'
-import { motion, useTransform } from 'framer-motion'
-import { Terminal, AlertTriangle, Lock, Crosshair, ArrowRight } from 'lucide-react'
+import React, { useRef } from 'react'
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion'
+import { ArrowRight, FileWarning, ChevronDown, Zap } from 'lucide-react'
 
-export default function Hero({ scrollY, navigate, textEnter, textLeave }) {
+export default function Hero({ navigate, textEnter, textLeave }) {
+  const containerRef = useRef(null)
+  const { scrollY } = useScroll()
+  
+  // Parallax Scroll Effects
   const y1 = useTransform(scrollY, [0, 500], [0, 200])
+  const opacity = useTransform(scrollY, [0, 300], [1, 0])
+
+  // 🖱️ OPTIMIZED MOUSE LOGIC (Reduced stiffness for smoothness)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const mouseX = useSpring(x, { stiffness: 30, damping: 20 })
+  const mouseY = useSpring(y, { stiffness: 30, damping: 20 })
+
+  function handleMouseMove({ clientX, clientY }) {
+    if (!containerRef.current) return
+    const { width, height } = containerRef.current.getBoundingClientRect()
+    const xPct = (clientX / width) - 0.5
+    const yPct = (clientY / height) - 0.5
+    x.set(xPct)
+    y.set(yPct)
+  }
+
+  // Moving blobs slightly with mouse (Subtle Parallax)
+  const blobX = useTransform(mouseX, [-0.5, 0.5], [-50, 50])
+  const blobY = useTransform(mouseY, [-0.5, 0.5], [-50, 50])
 
   return (
-    <header className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20 z-10">
-      <motion.div style={{ y: y1 }} className="absolute inset-0 z-0">
-        <img src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2074&auto=format&fit=crop" className="w-full h-full object-cover opacity-20 scale-110" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+    <header 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      className="relative h-screen flex items-center justify-center overflow-hidden pt-24 bg-slate-950"
+    >
+      {/* 🌑 LAYER 0: STATIC BACKGROUND (GPU Accelerated) */}
+      <motion.div style={{ y: y1 }} className="absolute inset-0 z-0 will-change-transform">
+        <img 
+          src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2074&auto=format&fit=crop" 
+          alt="Fire Background" 
+          className="w-full h-full object-cover opacity-20 scale-105 grayscale"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#020617_100%)]" />
       </motion.div>
 
-      <div className="relative z-10 text-center px-4 max-w-6xl">
-        <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          <div className="inline-flex items-center gap-2 bg-red-600/10 border border-red-500/50 rounded-full px-4 py-1 mb-8">
-            <Terminal size={14} className="text-red-500" />
-            <span className="text-red-400 font-bold text-xs uppercase tracking-[0.2em]">Active Defense Grid: Ready</span>
+      {/* 🔥 LAYER 1: MOLTEN LAVA (Optimized Blurs) */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <motion.div 
+          style={{ x: blobX, y: blobY }}
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.2, 0.3, 0.2]
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-orange-600 rounded-full blur-[80px] will-change-transform"
+        />
+        <motion.div 
+          style={{ x: useTransform(mouseX, [-0.5, 0.5], [50, -50]), y: useTransform(mouseY, [-0.5, 0.5], [50, -50]) }}
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.4, 0.3]
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-red-800 rounded-full blur-[100px] will-change-transform"
+        />
+      </div>
+
+      {/* 🚀 LAYER 2: CONTENT (Removed 3D Rotation for performance) */}
+      <motion.div style={{ opacity }} className="relative z-10 text-center px-4 max-w-6xl">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.8 }}
+        >
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-red-500/20 bg-red-950/20 backdrop-blur-sm mb-8">
+            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+            <span className="text-red-400 font-mono text-[10px] font-bold uppercase tracking-widest">
+              Orbital Status: Online
+            </span>
           </div>
-          <h1 className="text-5xl md:text-8xl font-black mb-12 tracking-tight uppercase leading-none">
-            Detect. Predict. <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500">Eliminate.</span>
+
+          <h1 className="text-6xl md:text-9xl font-black mb-6 leading-[0.85] tracking-tighter">
+            <span className="block text-white">PREDICT.</span>
+            <span className="block text-white">DETECT.</span>
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 pb-4">
+              NEUTRALIZE.
+            </span>
           </h1>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <GatewayCard icon={<AlertTriangle className="text-orange-500" />} title="Report Fire" desc="Public terminal. Submit intel & receive rewards." btnText="Start Report" color="orange" onClick={() => navigate('/report')} onEnter={textEnter} onLeave={textLeave} />
-            <GatewayCard icon={<Lock className="text-red-500" />} title="Command Console" desc="Restricted access. Drone & Sat telemetry." btnText="Verify ID" color="red" onClick={() => navigate('/dashboard')} onEnter={textEnter} onLeave={textLeave} />
+          <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+            NASA Satellite Monitoring and Autonomous Drone Interception Protocol.
+          </p>
+          
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <button 
+              onClick={() => navigate('/auth')}
+              className="px-10 py-5 bg-red-600 text-white font-bold text-lg tracking-widest uppercase hover:bg-red-700 transition-all shadow-lg shadow-red-900/20"
+            >
+              Initialize Command
+            </button>
+            <button 
+              onClick={() => navigate('/registry')}
+              className="px-10 py-5 border border-white/10 text-white font-bold text-lg tracking-widest uppercase hover:bg-white/5 transition-all"
+            >
+              Report Incident
+            </button>
           </div>
         </motion.div>
-      </div>
-    </header>
-  )
-}
+      </motion.div>
 
-function GatewayCard({ icon, title, desc, btnText, color, onClick, onEnter, onLeave }) {
-  const borderColor = color === 'orange' ? 'border-orange-500/30' : 'border-red-500/30'
-  const glowColor = color === 'orange' ? 'group-hover:bg-orange-500' : 'group-hover:bg-red-600'
-  return (
-    <motion.div onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} whileHover={{ scale: 1.02, y: -5 }} className={`bg-slate-900/40 backdrop-blur-xl border ${borderColor} p-8 rounded-[2.5rem] text-left group cursor-none relative overflow-hidden transition-all duration-500`}>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-white/5 ${glowColor} transition-colors duration-500`}>{React.cloneElement(icon, { className: 'group-hover:text-white transition-colors duration-500' })}</div>
-      <h3 className="text-2xl font-black uppercase mb-2 tracking-tighter text-white leading-none">{title}</h3>
-      <p className="text-slate-400 text-sm mb-6 leading-relaxed font-medium">{desc}</p>
-      <div className={`flex items-center gap-2 font-black text-[10px] uppercase tracking-[0.2em] ${color === 'orange' ? 'text-orange-500' : 'text-red-500'}`}>{btnText} <Crosshair size={12} className="group-hover:rotate-90 transition-transform duration-500" /></div>
-      <div className="absolute -bottom-6 -right-6 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 scale-150 rotate-12 pointer-events-none">{React.cloneElement(icon, { size: 180 })}</div>
-    </motion.div>
+      {/* SCANLINE (Simplified) */}
+      <div className="absolute inset-0 pointer-events-none z-50 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] bg-[size:100%_4px,3px_100%] opacity-20"></div>
+    </header>
   )
 }

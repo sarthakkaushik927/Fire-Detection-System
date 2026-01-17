@@ -20,6 +20,7 @@ import ComplaintRegistry from './components/Landing/ComplaintRegistry'
 
 // --- 3. ADMIN DASHBOARD COMPONENTS (src/components/dashboard/) ---
 import Complaints from './components/dashboard/Complaints'
+import Inbox from './components/dashboard/Inbox'
 
 const ProtectedRoute = ({ user, children }) => {
   if (!user) return <Navigate to="/auth" replace />
@@ -122,7 +123,7 @@ function App() {
             <Route path="/account" element={
               <ProtectedRoute user={user}><AccountPage user={user} /></ProtectedRoute>
             } />
-
+            <Route path="/inbox" element={<Inbox />} />
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

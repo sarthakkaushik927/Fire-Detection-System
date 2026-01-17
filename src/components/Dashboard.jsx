@@ -98,7 +98,7 @@ export default function Dashboard() {
   const fetchHighRiskData = async () => {
     setRiskLoading(true)
     try {
-      const res = await fetch(`${BACKEND_PROXY}/api/fires/get_height_regions_area`, { 
+      const res = await fetch(`${BACKEND_PROXY}/api/fires/get_hight_regions_area`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: selectedCountry, state: selectedState, day_range: 3 })
