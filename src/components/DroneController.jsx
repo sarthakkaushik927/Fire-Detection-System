@@ -12,7 +12,7 @@ import {
 const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/Z8_YeArWzD4?autoplay=1&mute=1&controls=0&loop=1&playlist=Z8_YeArWzD4"
 
 // 🟢 EC2 BACKEND CONFIGURATION
-const BACKEND_URL =  "http://127.0.0.1:8000"
+const BACKEND_URL =  "http://54.196.216.231:8000"
 
 // Fallback Presets
 const PRESET_LOCATIONS = [
