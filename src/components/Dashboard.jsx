@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { saveImage } from '../utils/db' 
-import { supabase } from '../../Supabase/supabase' 
+import { supabase } from '../Supabase/supabase' 
 import toast, { Toaster } from 'react-hot-toast' // 🟢 IMPORT TOAST
 
 import { 
