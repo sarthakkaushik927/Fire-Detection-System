@@ -11,8 +11,8 @@ import {
 // 🟢 YOUTUBE VIDEO URL
 const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/Z8_YeArWzD4?autoplay=1&mute=1&controls=0&loop=1&playlist=Z8_YeArWzD4"
 
-// 🟢 EC2 BACKEND CONFIGURATION
-const BACKEND_URL =  "http://54.196.216.231:8000"
+// 🟢 NEW KRYPTONITE BACKEND
+const BACKEND_URL = "https://kryptonite-8k3u.vercel.app"
 
 // Fallback Presets
 const PRESET_LOCATIONS = [
@@ -47,7 +47,7 @@ export default function DroneController() {
   // 1. INITIAL FETCH
   useEffect(() => {
     fetchTargets()
-    fetchMapData() // Get the visual map
+    fetchMapData()
   }, [])
 
   // Sync Manual Inputs
@@ -56,11 +56,11 @@ export default function DroneController() {
     setManualLon(activeTarget.lon)
   }, [activeTarget])
 
-  // 🟢 FETCH TARGET LIST
+  // 🟢 FETCH TARGET LIST (Updated Endpoint)
   const fetchTargets = async () => {
     setLoadingTargets(true)
     try {
-      const res = await fetch(`${BACKEND_URL}/get_hight_regions_area`, { 
+      const res = await fetch(`${BACKEND_URL}/api/fires/get_height_regions_area`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: "india", state: "up", day_range: 3 })
@@ -98,17 +98,17 @@ export default function DroneController() {
     }
   }
 
-  // 🟢 FETCH MINI-MAP HTML
+  // 🟢 FETCH MINI-MAP HTML (Updated Endpoint)
   const fetchMapData = async () => {
     setMapLoading(true)
     try {
-      const res = await fetch(`${BACKEND_URL}/get_locations`, { 
+      const res = await fetch(`${BACKEND_URL}/api/fires/get_locations`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: "india", state: "up", day_range: 3 })
       })
-      const data = await res.json()
-      setMapHtml(data.html)
+      const data = await res.text() // API returns HTML string
+      setMapHtml(data)
     } catch (e) { console.error("Map Fetch Error:", e) }
     finally { setMapLoading(false) }
   }
@@ -152,7 +152,7 @@ export default function DroneController() {
         <div className="text-center">
           <h1 className="text-xl md:text-2xl font-black text-red-600 dark:text-red-500 tracking-[0.2em] animate-pulse">TACTICAL COMMAND</h1>
           <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase mt-1">
-             Destination Locked: <span className="text-slate-900 dark:text-white font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-white/10 shadow-sm">{activeTarget.lat.toFixed(4)}° N, {activeTarget.lon.toFixed(4)}° E</span>
+              Destination Locked: <span className="text-slate-900 dark:text-white font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-white/10 shadow-sm">{activeTarget.lat.toFixed(4)}° N, {activeTarget.lon.toFixed(4)}° E</span>
           </p>
         </div>
 

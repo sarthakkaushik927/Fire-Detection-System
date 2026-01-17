@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-// 🟢 FIX 1: Correct path to utils (Go up 1 level)
 import { saveImage } from '../utils/db' 
-// 🟢 FIX 2: Correct path to Supabase (Go up 1 level)
-import { supabase } from '../Supabase/supabase' 
+import { supabase } from '../../Supabase/supabase' 
 
 import { 
   Map as MapIcon, Plane, Radio, RefreshCw, Upload, 
@@ -13,8 +11,8 @@ import {
   User, CheckCircle2, XCircle, BellRing
 } from 'lucide-react'
 
-// 🟢 PROXY CONFIG
-const BACKEND_PROXY = "/api"
+// 🟢 NEW KRYPTONITE BACKEND
+const BACKEND_PROXY = "https://kryptonite-8k3u.vercel.app"
 
 const REGIONS = {
   india: ["up", "mp", "maharashtra"]
@@ -77,26 +75,26 @@ export default function Dashboard() {
   // 🟢 REALTIME REPORTS STATE
   const [userReports, setUserReports] = useState([])
 
-  // 1. Fetch Map
+  // 1. Fetch Map (Updated Endpoint)
   const fetchMap = async () => {
     setMapLoading(true)
     try {
-      const res = await fetch(`${BACKEND_PROXY}/get_locations`, { 
+      const res = await fetch(`${BACKEND_PROXY}/api/fires/get_locations`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: selectedCountry, state: selectedState, day_range: 3 })
       })
-      const data = await res.json()
-      setMapHtml(data.html)
+      const data = await res.text() // API returns HTML string
+      setMapHtml(data)
     } catch (e) { console.error("Map fetch failed", e) }
     finally { setMapLoading(false) }
   }
 
-  // 2. Fetch High Risk Points (Satellite)
+  // 2. Fetch High Risk Points (Updated Endpoint)
   const fetchHighRiskData = async () => {
     setRiskLoading(true)
     try {
-      const res = await fetch(`${BACKEND_PROXY}/get_hight_regions_area`, { 
+      const res = await fetch(`${BACKEND_PROXY}/api/fires/get_height_regions_area`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: selectedCountry, state: selectedState, day_range: 3 })
@@ -104,6 +102,7 @@ export default function Dashboard() {
       const result = await res.json()
       
       if (result.data) {
+        // Kryptonite might return pre-parsed JSON, check just in case
         let parsedData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data
         if (parsedData && parsedData.latitude) {
           const rows = Object.keys(parsedData.latitude).map(key => ({
@@ -127,25 +126,22 @@ export default function Dashboard() {
 
   // 🟢 3. SUPABASE REALTIME LISTENER
   useEffect(() => {
-    // A. Fetch existing pending reports
     const fetchReports = async () => {
       const { data } = await supabase
         .from('reports')
         .select('*')
-        .eq('status', 'pending') // Only show pending
+        .eq('status', 'pending') 
         .order('created_at', { ascending: false })
       if(data) setUserReports(data)
     }
     fetchReports()
 
-    // B. Listen for NEW reports
     const channel = supabase
       .channel('public:reports')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, (payload) => {
         if (payload.eventType === 'INSERT') {
             setUserReports(prev => [payload.new, ...prev])
         } else if (payload.eventType === 'UPDATE') {
-            // Remove from list if status changes from pending
             if (payload.new.status !== 'pending') {
                 setUserReports(prev => prev.filter(r => r.id !== payload.new.id))
             }
@@ -161,16 +157,21 @@ export default function Dashboard() {
     fetchMap()
   }, [selectedCountry, selectedState])
 
+  // 🟢 Updated Simulation Upload (Kryptonite Format)
   const handleSimulationUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     setSimLoading(true)
     const formData = new FormData()
-    formData.append('file', file)
+    formData.append('image', file) // 👈 Changed to 'image'
     try {
-      const response = await fetch(`${BACKEND_PROXY}/draw_boxes_fire`, { method: 'POST', body: formData })
+      const response = await fetch(`${BACKEND_PROXY}/api/fires/draw_boxes_fire`, { 
+          method: 'POST', 
+          body: formData 
+      })
       const result = await response.json()
-      if (result.data) setSimulatedFrame(`data:image/jpeg;base64,${result.data}`)
+      // 👈 Changed to 'image_base64'
+      if (result.image_base64) setSimulatedFrame(`data:image/${result.format || 'jpeg'};base64,${result.image_base64}`)
     } catch (err) { alert("Simulation failed.") } 
     finally { setSimLoading(false) }
   }
@@ -184,11 +185,8 @@ export default function Dashboard() {
     navigate('/drone-control', { state: { target: target, allTargets: highRiskPoints } })
   }
 
-  // 🟢 ACTION HANDLERS
   const handleVerify = async (report) => {
-    // 1. Update DB
     await supabase.from('reports').update({ status: 'verified' }).eq('id', report.id)
-    // 2. Deploy Drone
     deployDrone({ lat: report.latitude, lon: report.longitude })
   }
 
@@ -268,7 +266,7 @@ export default function Dashboard() {
            </div>
         </motion.div>
 
-        {/* 🟢 NEW SECTION: CIVILIAN COMPLAINTS FEED */}
+        {/* 🟢 CIVILIAN COMPLAINTS FEED */}
         <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-white/10 flex-1 flex flex-col min-h-[400px] transition-colors relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500"></div>
             
