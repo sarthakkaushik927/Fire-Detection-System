@@ -10,8 +10,8 @@ import {
 } from 'lucide-react'
 
 // 🟢 LIVE EC2 CONFIGURATION
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://54.196.216.231:8000"
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://54.196.216.231:8000/ws/drone"
+const BACKEND_URL = "http://54.196.216.231:8000"
+const WS_URL =  "ws://54.196.216.231:8000/ws/drone"
 
 const REGIONS = {
   india: ["up", "mp", "maharashtra"]
