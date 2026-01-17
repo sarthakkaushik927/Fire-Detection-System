@@ -92,7 +92,7 @@ export default function AuthScreen({ onLogin }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-12 py-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all font-mono text-sm"
-                placeholder="••••••••"
+                placeholder="•••••••• admin123"
               />
             </div>
           </div>
