@@ -24,6 +24,7 @@ import ComplaintRegistry from './components/Landing/ComplaintRegistry'
 import Complaints from './components/dashboard/Complaints'
 import Inbox from './components/dashboard/Inbox'
 
+// 🔒 Protected Route Component
 const ProtectedRoute = ({ user, children }) => {
   if (!user) return <Navigate to="/auth" replace />
   return children
@@ -43,47 +44,69 @@ function App() {
   const [isAuthChecking, setIsAuthChecking] = useState(true)
 
   useEffect(() => {
+    // A. Check Active Session on Load
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const newUser = { ...session.user, role: 'operator' }
         setUser(newUser)
         localStorage.setItem('firewatch_user', JSON.stringify(newUser))
+      } else {
+        // If Supabase says no session, clear local storage immediately
+        localStorage.removeItem('firewatch_user')
+        setUser(null)
       }
       setIsAuthChecking(false)
     })
 
+    // B. Listen for Auth Changes (Login/Logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
+      
+      if (event === 'SIGNED_OUT') {
+        // 🛑 CRITICAL FIX: Explicitly handle Sign Out event
+        setUser(null)
+        localStorage.removeItem('firewatch_user')
+        sessionStorage.clear()
+        navigate('/', { replace: true })
+      } 
+      else if (session?.user) {
         const newUser = { ...session.user, role: 'operator' }
         setUser(newUser)
         localStorage.setItem('firewatch_user', JSON.stringify(newUser))
         
-        // Auto-redirect to dashboard only on explicit sign-in or if sitting on auth page
-        if (event === 'SIGNED_IN' || location.pathname === '/auth') {
+        // 🟢 FIX: Only redirect to Dashboard if we are on the /auth page
+        // This prevents the app from forcing you to dashboard if you are just visiting the home page
+        if (location.pathname === '/auth') {
            navigate('/dashboard', { replace: true })
         }
-      } else {
-        // Do not clear user here immediately to prevent flashing /auth on logout
       }
+      
       setIsAuthChecking(false)
     })
 
     return () => subscription.unsubscribe()
   }, [navigate, location.pathname])
 
-  // 🟢 LOGOUT FUNCTION (The Fix)
+  // 🟢 LOGOUT FUNCTION
   const handleLogout = async () => {
-    // 1. Clear Supabase Session
-    await supabase.auth.signOut()
-    
-    // 2. Clear Local State
-    localStorage.removeItem('firewatch_user')
-    sessionStorage.removeItem('admin_unlocked')
-    setUser(null)
+    try {
+      // 1. Clear Supabase Session
+      await supabase.auth.signOut()
+      
+      // 2. Clear Local State
+      localStorage.removeItem('firewatch_user')
+      sessionStorage.clear()
+      setUser(null)
 
-    // 3. FORCE REDIRECT TO LANDING PAGE
-    // using window.location ensures we bypass ProtectedRoute logic completely
-    window.location.href = '/' 
+      // 3. Force Navigation to Home
+      navigate('/')
+      
+    } catch (error) {
+      console.error("Logout Error:", error)
+      // Force cleanup even if API fails
+      localStorage.clear()
+      sessionStorage.clear()
+      window.location.href = '/'
+    }
   }
 
   if (isAuthChecking) {
@@ -103,6 +126,7 @@ function App() {
         
         <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace' }}} />
 
+        {/* Dashboard/Admin Navbar */}
         {showAdminNavbar && (
           <Navbar user={user} onLogout={handleLogout} />
         )}
@@ -110,16 +134,20 @@ function App() {
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             
+            {/* Landing Page */}
             <Route path="/" element={<LandingPage user={user} onLogout={handleLogout} />} />
             
+            {/* Auth Screen */}
             <Route path="/auth" element={
                user ? <Navigate to="/dashboard" replace /> : <AuthScreen />
             } />
             
+            {/* Public Pages */}
             <Route path="/about" element={<AboutUs isStandalone={true} />} />
             <Route path="/registry" element={<ComplaintRegistry isStandalone={true} />} />
             <Route path="/report" element={<ReportFire />} />
 
+            {/* Protected Dashboard Routes */}
             <Route path="/dashboard" element={<ProtectedRoute user={user}><Dashboard /></ProtectedRoute>} />
             <Route path="/complaints" element={<ProtectedRoute user={user}><Complaints /></ProtectedRoute>} />
             <Route path="/drone-control" element={<ProtectedRoute user={user}><DroneController /></ProtectedRoute>} />
@@ -127,6 +155,7 @@ function App() {
             <Route path="/account" element={<ProtectedRoute user={user}><AccountPage user={user} /></ProtectedRoute>} />
             <Route path="/inbox" element={<ProtectedRoute user={user}><Inbox /></ProtectedRoute>} />
 
+            {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>
