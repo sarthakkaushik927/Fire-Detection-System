@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { ThemeProvider } from './context/ThemeContext'
 import { Toaster } from 'react-hot-toast'
 import { supabase } from './Supabase/supabase'
-import { Loader2 } from 'lucide-react' // Import Loader
+import { Loader2 } from 'lucide-react'
 
 // Components
 import Navbar from './components/Navbar'
@@ -33,76 +33,63 @@ function App() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // 1. USER STATE (Initialize from LocalStorage to support Admin Simulator)
+  // 1. USER STATE
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('firewatch_user')
     return saved ? JSON.parse(saved) : null
   })
 
-  // 2. 🟢 LOADING STATE (The Fix for the Loop)
+  // 2. LOADING STATE
   const [isAuthChecking, setIsAuthChecking] = useState(true)
 
   useEffect(() => {
-    // A. Check Active Session on Load (Handles Magic Link Token Parsing)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const newUser = { ...session.user, role: 'operator' }
         setUser(newUser)
         localStorage.setItem('firewatch_user', JSON.stringify(newUser))
       }
-      setIsAuthChecking(false) // 🟢 STOP LOADING ONCE CHECKED
+      setIsAuthChecking(false)
     })
 
-    // B. Listen for Auth Changes (Login/Logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         const newUser = { ...session.user, role: 'operator' }
         setUser(newUser)
         localStorage.setItem('firewatch_user', JSON.stringify(newUser))
         
-        // 🟢 Force redirect to dashboard if stuck on auth page
-        if (window.location.pathname === '/auth') {
-          navigate('/dashboard')
+        // Auto-redirect to dashboard only on explicit sign-in or if sitting on auth page
+        if (event === 'SIGNED_IN' || location.pathname === '/auth') {
+           navigate('/dashboard', { replace: true })
         }
       } else {
-        // Only clear user if we aren't using the Simulated Admin
-        const saved = localStorage.getItem('firewatch_user')
-        const parsed = saved ? JSON.parse(saved) : null
-        if (parsed && parsed.isSimulated) {
-          // Do nothing, keep admin logged in
-        } else {
-          setUser(null)
-          localStorage.removeItem('firewatch_user')
-        }
+        // Do not clear user here immediately to prevent flashing /auth on logout
       }
       setIsAuthChecking(false)
     })
 
     return () => subscription.unsubscribe()
-  }, [navigate])
+  }, [navigate, location.pathname])
 
-  const handleLogin = (userData) => {
-    setUser(userData)
-    localStorage.setItem('firewatch_user', JSON.stringify(userData))
-  }
-
+  // 🟢 LOGOUT FUNCTION (The Fix)
   const handleLogout = async () => {
+    // 1. Clear Supabase Session
     await supabase.auth.signOut()
-    setUser(null)
+    
+    // 2. Clear Local State
     localStorage.removeItem('firewatch_user')
-    window.location.href = '/'
+    sessionStorage.removeItem('admin_unlocked')
+    setUser(null)
+
+    // 3. FORCE REDIRECT TO LANDING PAGE
+    // using window.location ensures we bypass ProtectedRoute logic completely
+    window.location.href = '/' 
   }
 
-  // 🟢 3. SHOW LOADER WHILE SUPABASE CHECKS THE MAGIC LINK
   if (isAuthChecking) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 size={48} className="text-red-600 animate-spin mx-auto mb-4" />
-          <h2 className="text-white font-mono font-bold uppercase tracking-widest animate-pulse">
-            Establishing Uplink...
-          </h2>
-        </div>
+        <Loader2 size={48} className="text-red-600 animate-spin mx-auto mb-4" />
       </div>
     )
   }
@@ -113,6 +100,7 @@ function App() {
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-white dark:bg-black text-slate-900 dark:text-white transition-colors duration-300">
+        
         <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace' }}} />
 
         {showAdminNavbar && (
@@ -124,16 +112,14 @@ function App() {
             
             <Route path="/" element={<LandingPage user={user} onLogout={handleLogout} />} />
             
-            {/* If user is logged in, Auth Screen redirects to dashboard */}
             <Route path="/auth" element={
-               user ? <Navigate to="/dashboard" replace /> : <AuthScreen onLogin={handleLogin} />
+               user ? <Navigate to="/dashboard" replace /> : <AuthScreen />
             } />
             
             <Route path="/about" element={<AboutUs isStandalone={true} />} />
             <Route path="/registry" element={<ComplaintRegistry isStandalone={true} />} />
             <Route path="/report" element={<ReportFire />} />
 
-            {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute user={user}><Dashboard /></ProtectedRoute>} />
             <Route path="/complaints" element={<ProtectedRoute user={user}><Complaints /></ProtectedRoute>} />
             <Route path="/drone-control" element={<ProtectedRoute user={user}><DroneController /></ProtectedRoute>} />
