@@ -1,16 +1,15 @@
 import React, { useRef } from 'react'
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion'
-import { ArrowRight, FileWarning, ChevronDown, Zap } from 'lucide-react'
 
-export default function Hero({ navigate, textEnter, textLeave }) {
+export default function Hero({ navigate, textEnter, textLeave, onRestrictedClick }) {
   const containerRef = useRef(null)
   const { scrollY } = useScroll()
   
-  // Parallax Scroll Effects
+  // --- PARALLAX & SCROLL EFFECTS ---
   const y1 = useTransform(scrollY, [0, 500], [0, 200])
   const opacity = useTransform(scrollY, [0, 300], [1, 0])
 
-  // 🖱️ OPTIMIZED MOUSE LOGIC (Reduced stiffness for smoothness)
+  // --- MOUSE MOVEMENT LOGIC ---
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const mouseX = useSpring(x, { stiffness: 30, damping: 20 })
@@ -25,9 +24,22 @@ export default function Hero({ navigate, textEnter, textLeave }) {
     y.set(yPct)
   }
 
-  // Moving blobs slightly with mouse (Subtle Parallax)
+  // Calculate Blob positions based on mouse
   const blobX = useTransform(mouseX, [-0.5, 0.5], [-50, 50])
   const blobY = useTransform(mouseY, [-0.5, 0.5], [-50, 50])
+  const blobX2 = useTransform(mouseX, [-0.5, 0.5], [50, -50])
+  const blobY2 = useTransform(mouseY, [-0.5, 0.5], [50, -50])
+
+  // --- SAFE NAVIGATION HANDLER ---
+  // If the parent LandingPage passed the gatekeeper function, use it.
+  // Otherwise, default to standard navigation.
+  const handleAction = (path) => {
+    if (onRestrictedClick) {
+      onRestrictedClick(path)
+    } else {
+      navigate(path)
+    }
+  }
 
   return (
     <header 
@@ -45,8 +57,9 @@ export default function Hero({ navigate, textEnter, textLeave }) {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#020617_100%)]" />
       </motion.div>
 
-      {/* 🔥 LAYER 1: MOLTEN LAVA (Optimized Blurs) */}
+      {/* 🔥 LAYER 1: MOLTEN LAVA (Animated Blobs) */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Blob 1 */}
         <motion.div 
           style={{ x: blobX, y: blobY }}
           animate={{ 
@@ -56,8 +69,9 @@ export default function Hero({ navigate, textEnter, textLeave }) {
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-orange-600 rounded-full blur-[80px] will-change-transform"
         />
+        {/* Blob 2 */}
         <motion.div 
-          style={{ x: useTransform(mouseX, [-0.5, 0.5], [50, -50]), y: useTransform(mouseY, [-0.5, 0.5], [50, -50]) }}
+          style={{ x: blobX2, y: blobY2 }}
           animate={{ 
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.4, 0.3]
@@ -67,7 +81,7 @@ export default function Hero({ navigate, textEnter, textLeave }) {
         />
       </div>
 
-      {/* 🚀 LAYER 2: CONTENT (Removed 3D Rotation for performance) */}
+      {/* 🚀 LAYER 2: CONTENT */}
       <motion.div style={{ opacity }} className="relative z-10 text-center px-4 max-w-6xl">
         <motion.div 
           initial={{ opacity: 0, y: 30 }} 
@@ -90,20 +104,27 @@ export default function Hero({ navigate, textEnter, textLeave }) {
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
             NASA Satellite Monitoring and Autonomous Drone Interception Protocol.
           </p>
           
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            {/* 🟢 BUTTON 1: COMMAND CENTER (Gated) */}
             <button 
-              onClick={() => navigate('/auth')}
-              className="px-10 py-5 bg-red-600 text-white font-bold text-lg tracking-widest uppercase hover:bg-red-700 transition-all shadow-lg shadow-red-900/20"
+              onMouseEnter={textEnter} 
+              onMouseLeave={textLeave}
+              onClick={() => handleAction('/dashboard')}
+              className="px-10 py-5 bg-red-600 text-white font-bold text-lg tracking-widest uppercase hover:bg-red-700 transition-all shadow-lg shadow-red-900/20 rounded-none clip-path-slant"
             >
               Initialize Command
             </button>
+
+            {/* 🟢 BUTTON 2: REGISTRY (Gated) */}
             <button 
-              onClick={() => navigate('/registry')}
-              className="px-10 py-5 border border-white/10 text-white font-bold text-lg tracking-widest uppercase hover:bg-white/5 transition-all"
+              onMouseEnter={textEnter} 
+              onMouseLeave={textLeave}
+              onClick={() => handleAction('/registry')}
+              className="px-10 py-5 border border-white/10 text-white font-bold text-lg tracking-widest uppercase hover:bg-white/5 transition-all rounded-none"
             >
               Report Incident
             </button>
@@ -111,7 +132,7 @@ export default function Hero({ navigate, textEnter, textLeave }) {
         </motion.div>
       </motion.div>
 
-      {/* SCANLINE (Simplified) */}
+      {/* 📺 LAYER 3: SCANLINE OVERLAY */}
       <div className="absolute inset-0 pointer-events-none z-50 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] bg-[size:100%_4px,3px_100%] opacity-20"></div>
     </header>
   )

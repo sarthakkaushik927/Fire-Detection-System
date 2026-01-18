@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { saveImage } from '../utils/db' 
 import { supabase } from '../Supabase/supabase' 
-import toast, { Toaster } from 'react-hot-toast' // 🟢 IMPORT TOAST
+import toast, { Toaster } from 'react-hot-toast'
 
 import { 
   Map as MapIcon, Plane, Radio, RefreshCw, Upload, 
-  X, Layers, Download, FolderOpen, 
-  Loader2, Cloud, Wind, Droplets, AlertTriangle, MapPin, 
-  User, CheckCircle2, XCircle, BellRing
+  X, Layers, Download, Loader2, Cloud, Wind, Droplets, MapPin, 
+  User, CheckCircle2, XCircle, BellRing, Save
 } from 'lucide-react'
 
-// 🟢 NEW KRYPTONITE BACKEND
+// 🟢 Backend Proxy for Python AI
 const BACKEND_PROXY = "https://keryptonite-8k3u.vercel.app"
 
 const REGIONS = {
@@ -25,15 +23,11 @@ function WeatherWidget() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=28.61&longitude=77.20&current=temperature_2m,relative_humidity_2m,wind_speed_10m&wind_speed_unit=kn")
-        const data = await res.json()
-        setWeather(data.current)
-      } catch (e) { console.error("Weather Error:", e) } 
-      finally { setLoading(false) }
-    }
-    fetchWeather()
+    fetch("https://api.open-meteo.com/v1/forecast?latitude=28.61&longitude=77.20&current=temperature_2m,relative_humidity_2m,wind_speed_10m&wind_speed_unit=kn")
+      .then(res => res.json())
+      .then(data => setWeather(data.current))
+      .catch(e => console.error("Weather Error:", e))
+      .finally(() => setLoading(false))
   }, [])
 
   if (loading) return <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse w-full mb-6"></div>
@@ -44,18 +38,18 @@ function WeatherWidget() {
         <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm"><Cloud size={28} className="text-white"/></div>
         <div>
            <p className="text-xs font-bold opacity-80 uppercase tracking-wider">Sector Conditions</p>
-           <p className="text-3xl font-black tracking-tight">{weather?.temperature_2m}°C</p>
+           <p className="text-3xl font-black tracking-tight">{weather?.temperature_2m || '--'}°C</p>
         </div>
       </div>
       <div className="relative z-10 flex gap-6 text-sm font-bold border-l border-white/20 pl-6">
-        <div className="flex flex-col items-center gap-1"><Wind size={18} className="opacity-70"/><span>{weather?.wind_speed_10m} KN</span></div>
-        <div className="flex flex-col items-center gap-1"><Droplets size={18} className="opacity-70"/><span>{weather?.relative_humidity_2m}%</span></div>
+        <div className="flex flex-col items-center gap-1"><Wind size={18} className="opacity-70"/><span>{weather?.wind_speed_10m || 0} KN</span></div>
+        <div className="flex flex-col items-center gap-1"><Droplets size={18} className="opacity-70"/><span>{weather?.relative_humidity_2m || 0}%</span></div>
       </div>
     </div>
   )
 }
 
-// --- MAIN DASHBOARD ---
+// --- MAIN DASHBOARD COMPONENT ---
 export default function Dashboard() {
   const navigate = useNavigate()
   
@@ -69,14 +63,12 @@ export default function Dashboard() {
   const [highRiskPoints, setHighRiskPoints] = useState([]) 
   const [riskLoading, setRiskLoading] = useState(false)
 
-  // Drone State
+  // Simulation & Reports
   const [simulatedFrame, setSimulatedFrame] = useState(null)
   const [simLoading, setSimLoading] = useState(false)
-
-  // 🟢 REALTIME REPORTS STATE
   const [userReports, setUserReports] = useState([])
 
-  // 1. Fetch Map (Updated Endpoint)
+  // 1. FETCH MAP
   const fetchMap = async () => {
     setMapLoading(true)
     try {
@@ -85,16 +77,16 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ country: selectedCountry, state: selectedState, day_range: 3 })
       })
-      const data = await res.text() // API returns HTML string
+      const data = await res.text()
       setMapHtml(data)
     } catch (e) { 
-        console.error("Map fetch failed", e) 
-        toast.error("Failed to load map data")
+        console.error("Map Error:", e) 
+        toast.error("Map Data Offline")
     }
     finally { setMapLoading(false) }
   }
 
-  // 2. Fetch High Risk Points (Updated Endpoint)
+  // 2. FETCH RISK POINTS
   const fetchHighRiskData = async () => {
     setRiskLoading(true)
     try {
@@ -105,46 +97,34 @@ export default function Dashboard() {
       })
       const result = await res.json()
       
-      if (result.data) {
-        let parsedData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data
-        if (parsedData && parsedData.latitude) {
+      let parsedData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data
+      if (parsedData && parsedData.latitude) {
           const rows = Object.keys(parsedData.latitude).map(key => ({
             lat: parsedData.latitude[key],
-            lon: parsedData.longitude?.[key] || 0,
-            brightness: parsedData.brightness?.[key] || 0,
-            confidence: parsedData.confidence?.[key] || 'u'
+            lon: parsedData.longitude?.[key] || 0
           }))
           setHighRiskPoints(rows)
-        } else {
-          setHighRiskPoints([])
-        }
       }
     } catch (e) { 
         console.error("Risk Data Error", e)
-        setHighRiskPoints([]) 
     } finally { 
         setRiskLoading(false) 
     }
   }
 
-  // 🟢 3. SUPABASE REALTIME LISTENER
+  // 3. REALTIME REPORTS LISTENER
   useEffect(() => {
     const fetchReports = async () => {
-      const { data } = await supabase
-        .from('reports')
-        .select('*')
-        .eq('status', 'pending') 
-        .order('created_at', { ascending: false })
+      const { data } = await supabase.from('reports').select('*').eq('status', 'pending').order('created_at', { ascending: false })
       if(data) setUserReports(data)
     }
     fetchReports()
 
-    const channel = supabase
-      .channel('public:reports')
+    const channel = supabase.channel('public:reports')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, (payload) => {
         if (payload.eventType === 'INSERT') {
             setUserReports(prev => [payload.new, ...prev])
-            toast("New Civilian Report Received", { icon: '📡' })
+            toast("New Civilian Report", { icon: '📡' })
         } else if (payload.eventType === 'UPDATE') {
             if (payload.new.status !== 'pending') {
                 setUserReports(prev => prev.filter(r => r.id !== payload.new.id))
@@ -156,23 +136,25 @@ export default function Dashboard() {
     return () => supabase.removeChannel(channel)
   }, [])
 
+  // Auto-Refresh Map/Data on Region Change
   useEffect(() => {
     fetchHighRiskData()
     fetchMap()
   }, [selectedCountry, selectedState])
 
-  // 🟢 Updated Simulation Upload (Kryptonite Format)
+  // 🟢 4. SIMULATION UPLOAD -> PYTHON -> SUPABASE STORAGE -> DB
   const handleSimulationUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     setSimLoading(true)
     
-    // 🟢 Show Loading Toast
-    const toastId = toast.loading("Processing Satellite Imagery...")
+    const toastId = toast.loading("Processing Intelligence...")
 
     const formData = new FormData()
     formData.append('image', file) 
+    
     try {
+      // A. Send to Python Backend
       const response = await fetch(`${BACKEND_PROXY}/api/fires/draw_boxes_fire`, { 
           method: 'POST', 
           body: formData 
@@ -180,30 +162,56 @@ export default function Dashboard() {
       const result = await response.json()
       
       if (result.image_base64) {
-         setSimulatedFrame(`data:image/${result.format || 'jpeg'};base64,${result.image_base64}`)
-         toast.success("Simulation Loaded Successfully", { id: toastId })
+         // B. Convert Base64 back to Blob for Upload
+         const base64Response = await fetch(`data:image/jpeg;base64,${result.image_base64}`)
+         const blob = await base64Response.blob()
+         const fileName = `simulation_${Date.now()}.jpg`
+
+         // Set Local Preview
+         setSimulatedFrame(URL.createObjectURL(blob))
+
+         // C. Upload to Supabase Storage
+         const { error: uploadError } = await supabase.storage
+            .from('fire-reports') 
+            .upload(fileName, blob)
+         
+         if (uploadError) throw new Error("Storage Upload Failed")
+
+         // D. Get Public URL
+         const { data: publicUrlData } = supabase.storage
+            .from('fire-reports')
+            .getPublicUrl(fileName)
+
+         // E. Insert into Database (Resources Tab)
+         const { error: dbError } = await supabase.from('downloads').insert([{
+             image_url: publicUrlData.publicUrl,
+             type: 'simulation'
+         }])
+
+         if (dbError) throw new Error("DB Record Failed")
+
+         toast.success("Analysis Synced to Cloud", { id: toastId })
       } else {
-         toast("No anomalies detected in file", { id: toastId, icon: 'ℹ️' })
+         toast("No threats detected.", { id: toastId, icon: '✅' })
       }
     } catch (err) { 
-        toast.error("Simulation Upload Failed", { id: toastId }) 
+        console.error(err)
+        toast.error("Process Failed: " + err.message, { id: toastId }) 
     } 
     finally { setSimLoading(false) }
   }
 
+  // Actions
   const deployDrone = (targetCoords) => {
     const target = targetCoords || highRiskPoints[0]
-    if (!target && highRiskPoints.length === 0) {
-      toast.error("No active fire targets detected for deployment")
-      return
-    }
-    toast.success("Drone Deployment Sequence Initiated")
+    if (!target && highRiskPoints.length === 0) return toast.error("No active targets")
+    toast.success("Drone Deployment Initiated")
     navigate('/drone-control', { state: { target: target, allTargets: highRiskPoints } })
   }
 
   const handleVerify = async (report) => {
     await supabase.from('reports').update({ status: 'verified' }).eq('id', report.id)
-    toast.success("Report Verified. Deploying Units.")
+    toast.success("Report Verified. Deploying.")
     deployDrone({ lat: report.latitude, lon: report.longitude })
   }
 
@@ -212,7 +220,6 @@ export default function Dashboard() {
     toast("Report Dismissed", { icon: '🗑️' })
   }
 
-  const displayFrame = simulatedFrame
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } }
   const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }
 
@@ -221,10 +228,8 @@ export default function Dashboard() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      // 🟢 RESPONSIVE: grid-cols-1 on mobile, 12 on large screens
       className="max-w-[1800px] mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-20 pt-6"
     >
-      {/* 🟢 TOASTER COMPONENT */}
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#1e293b', color: '#fff' } }} />
 
       {/* 🌍 CONTROL BAR */}
@@ -249,22 +254,17 @@ export default function Dashboard() {
 
       {/* 🗺️ LEFT COLUMN: MAP */}
       <motion.section variants={itemVariants} className="lg:col-span-8 flex flex-col gap-6 order-2 lg:order-1">
-        
-        {/* 🟢 RESPONSIVE MAP CONTAINER: h-96 on mobile, h-[600px] on medium, h-[800px] on large */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2rem] shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden relative group h-96 md:h-[600px] lg:h-[800px] transition-colors duration-300">
-           
-           {/* 🟢 RESPONSIVE HEADER: top-3 left-3 for mobile */}
            <div className="absolute top-3 left-3 md:top-6 md:left-6 z-10 bg-white/90 dark:bg-slate-950/80 backdrop-blur px-3 py-1.5 md:px-4 md:py-2 rounded-full flex items-center gap-2 md:gap-3 border border-slate-200 dark:border-white/10 shadow-sm">
               <MapIcon className="text-blue-600 dark:text-blue-500 w-3 h-3 md:w-[18px] md:h-[18px]" />
               <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">Live Feed: {selectedState}, {selectedCountry}</span>
            </div>
 
-           {/* 🟢 RESPONSIVE BUTTON: top-3 right-3 for mobile, smaller padding */}
            <motion.button 
-              whileHover={{ scale: 1.05 }} 
-              whileTap={{ scale: 0.95 }} 
-              onClick={fetchMap} 
-              className="absolute top-3 right-3 md:top-6 md:right-6 z-10 bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-2 md:px-5 md:py-2.5 rounded-full font-bold flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
+             whileHover={{ scale: 1.05 }} 
+             whileTap={{ scale: 0.95 }} 
+             onClick={fetchMap} 
+             className="absolute top-3 right-3 md:top-6 md:right-6 z-10 bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-2 md:px-5 md:py-2.5 rounded-full font-bold flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
            >
               <RefreshCw size={16} className={mapLoading ? 'animate-spin' : ''} />
               <span className="hidden md:inline">{mapLoading ? 'Syncing...' : 'Refresh Map'}</span>
@@ -286,22 +286,24 @@ export default function Dashboard() {
         
         {/* DRONE FEED */}
         <motion.div variants={itemVariants} className="bg-black rounded-[2rem] h-[200px] md:h-[250px] relative overflow-hidden shadow-2xl border-[4px] border-slate-800 shrink-0">
-           <div className="absolute inset-0 pointer-events-none z-10 p-4 md:p-6 flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                 <div className="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
-                    <Radio size={12} className={simulatedFrame ? 'text-green-500 animate-pulse' : 'text-slate-500'} />
-                    <span className="text-[10px] font-mono font-bold text-white uppercase">{simulatedFrame ? 'SIM_MODE' : 'OFFLINE'}</span>
-                 </div>
-                 {simulatedFrame && <button onClick={() => setSimulatedFrame(null)} className="pointer-events-auto bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-md transition"><X size={14} /></button>}
+           <div className="absolute top-4 left-4 z-10 flex gap-2">
+              <div className="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
+                 <Radio size={12} className={simulatedFrame ? 'text-green-500 animate-pulse' : 'text-slate-500'} />
+                 <span className="text-[10px] font-mono font-bold text-white uppercase">{simulatedFrame ? 'SIM_MODE' : 'OFFLINE'}</span>
               </div>
+              {simulatedFrame && (
+                  <button onClick={() => setSimulatedFrame(null)} className="bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-md transition shadow-lg"><X size={14} /></button>
+              )}
            </div>
-           {simLoading && <div className="scan-line"></div>}
+           
+           {simLoading && <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80"><Loader2 className="text-orange-500 animate-spin" size={32} /></div>}
+           
            <div className="w-full h-full bg-black relative flex items-center justify-center">
-             {simLoading ? <div className="text-center"><Loader2 className="text-orange-500 animate-spin mb-2 mx-auto" size={32} /><p className="text-orange-500 font-mono text-xs uppercase">Processing...</p></div> : displayFrame ? <img src={displayFrame} className="w-full h-full object-contain bg-black" alt="Feed" /> : <div className="text-center text-slate-800"><Plane size={48} className="mb-4 opacity-50 mx-auto" /><p className="font-mono text-xs uppercase tracking-widest">No Signal</p></div>}
+             {simulatedFrame ? <img src={simulatedFrame} className="w-full h-full object-contain bg-black" alt="Feed" /> : <div className="text-center text-slate-800"><Plane size={48} className="mb-4 opacity-50 mx-auto" /><p className="font-mono text-xs uppercase tracking-widest">No Signal</p></div>}
            </div>
         </motion.div>
 
-        {/* 🟢 CIVILIAN COMPLAINTS FEED */}
+        {/* REPORTS FEED */}
         <motion.div variants={itemVariants} className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-white/10 flex-1 flex flex-col min-h-[400px] lg:min-h-0 transition-colors relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500"></div>
             
@@ -314,7 +316,6 @@ export default function Dashboard() {
                 </span>
             </div>
 
-            {/* 🟢 RESPONSIVE FEED: Limit height on mobile so it doesn't push the button away */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar max-h-[300px] lg:max-h-none">
                 {userReports.length > 0 ? userReports.map((report) => (
                     <motion.div 
@@ -326,9 +327,7 @@ export default function Dashboard() {
                         <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                                <span className="text-[10px] font-mono text-slate-400">
-                                    {new Date(report.created_at).toLocaleTimeString()}
-                                </span>
+                                <span className="text-[10px] font-mono text-slate-400">{new Date(report.created_at).toLocaleTimeString()}</span>
                             </div>
                             <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500 bg-slate-200 dark:bg-white/5 px-2 py-1 rounded">
                                 <MapPin size={10} /> {report.latitude.toFixed(3)}, {report.longitude.toFixed(3)}
@@ -346,16 +345,10 @@ export default function Dashboard() {
                         </p>
 
                         <div className="grid grid-cols-2 gap-2">
-                            <button 
-                                onClick={() => handleVerify(report)}
-                                className="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
-                            >
-                                <CheckCircle2 size={12} /> Deploy Drone
+                            <button onClick={() => handleVerify(report)} className="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors">
+                                <CheckCircle2 size={12} /> Deploy
                             </button>
-                            <button 
-                                onClick={() => handleDismiss(report.id)}
-                                className="bg-slate-200 dark:bg-white/10 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
-                            >
+                            <button onClick={() => handleDismiss(report.id)} className="bg-slate-200 dark:bg-white/10 hover:bg-red-500 hover:text-white text-slate-500 dark:text-slate-400 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-colors">
                                 <XCircle size={12} /> Dismiss
                             </button>
                         </div>
@@ -371,7 +364,7 @@ export default function Dashboard() {
             <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/5">
                 <label className="flex items-center justify-center p-3 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl cursor-pointer hover:border-orange-500 hover:text-orange-500 transition text-slate-400 dark:text-slate-500 text-xs font-bold uppercase gap-2 group bg-slate-50 dark:bg-slate-900/50">
                     <Upload size={14} className="group-hover:scale-110 transition-transform"/> 
-                    {simLoading ? "Processing..." : "Upload Satellite Data (Sim)"}
+                    {simLoading ? "Analyzing..." : "Upload Satellite Data"}
                     <input type="file" className="hidden" onChange={handleSimulationUpload} accept="image/*" />
                 </label>
             </div>
