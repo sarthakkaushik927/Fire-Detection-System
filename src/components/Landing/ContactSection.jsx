@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Send, Mail, User, MessageSquare, ShieldCheck, Zap, Activity, Terminal } from 'lucide-react'
+import { Send, Mail, User, MessageSquare, ShieldCheck, Activity, Terminal, Loader2 } from 'lucide-react'
 import { supabase } from '../../Supabase/supabase' 
 import toast, { Toaster } from 'react-hot-toast'
 
@@ -14,17 +14,24 @@ export default function ContactSection({ textEnter, textLeave }) {
     const toastId = toast.loading("Establishing Secure Uplink...")
 
     try {
+      // 🟢 1. SAVE TO DATABASE (This makes it show up in Dashboard Inbox)
       const { error: dbError } = await supabase
         .from('contact_messages')
-        .insert([{ ...formData, status: 'unread' }])
+        .insert([{ 
+            name: formData.name, 
+            email: formData.email, 
+            message: formData.message,
+            status: 'unread' // Mark as unread for the admin
+        }])
 
-      if (dbError) throw new Error("Database Sync Failed")
+      if (dbError) throw dbError
 
-      // ... keep your existing fetch logic for emails here ...
-
+      // 🟢 2. UI SUCCESS STATE
       toast.success("Transmission Received & Logged", { id: toastId })
       setFormData({ name: '', email: '', message: '' })
+
     } catch (error) {
+      console.error(error)
       toast.error("Transmission Interrupted.", { id: toastId })
     } finally {
       setLoading(false)
@@ -32,8 +39,8 @@ export default function ContactSection({ textEnter, textLeave }) {
   }
 
   return (
-    <section className="py-32 px-6 bg-[#020617] relative overflow-hidden border-t border-red-600/20">
-      <Toaster position="bottom-right" />
+    <section className="py-32 px-6 bg-[#020617] relative overflow-hidden border-t border-red-600/20" id="contact">
+      <Toaster position="bottom-right" toastOptions={{ style: { background: '#0f172a', color: '#fff' }}} />
       
       {/* 🟦 THEME MATCHING GRID */}
       <div 
@@ -110,7 +117,7 @@ export default function ContactSection({ textEnter, textLeave }) {
                     <User className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-red-500 transition-colors" size={16} />
                     <input 
                       required type="text" placeholder="FULL NAME"
-                      className="w-full bg-transparent border-b border-white/10 py-3 pl-8 text-white focus:border-red-600 outline-none transition-all font-mono text-sm uppercase tracking-tighter"
+                      className="w-full bg-transparent border-b border-white/10 py-3 pl-8 text-white focus:border-red-600 outline-none transition-all font-mono text-sm uppercase tracking-tighter placeholder:text-slate-700"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                     />
@@ -123,7 +130,7 @@ export default function ContactSection({ textEnter, textLeave }) {
                     <Mail className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-red-500 transition-colors" size={16} />
                     <input 
                       required type="email" placeholder="EMAIL ADDRESS"
-                      className="w-full bg-transparent border-b border-white/10 py-3 pl-8 text-white focus:border-red-600 outline-none transition-all font-mono text-sm uppercase tracking-tighter"
+                      className="w-full bg-transparent border-b border-white/10 py-3 pl-8 text-white focus:border-red-600 outline-none transition-all font-mono text-sm uppercase tracking-tighter placeholder:text-slate-700"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                     />
@@ -137,7 +144,7 @@ export default function ContactSection({ textEnter, textLeave }) {
                   <MessageSquare className="absolute left-0 top-4 text-slate-600 group-focus-within:text-red-500 transition-colors" size={16} />
                   <textarea 
                     required rows="4" placeholder="DESCRIBE THE INCIDENT OR REQUEST..."
-                    className="w-full bg-transparent border-b border-white/10 py-3 pl-8 text-white focus:border-red-600 outline-none transition-all font-mono text-sm resize-none uppercase tracking-tighter"
+                    className="w-full bg-transparent border-b border-white/10 py-3 pl-8 text-white focus:border-red-600 outline-none transition-all font-mono text-sm resize-none uppercase tracking-tighter placeholder:text-slate-700"
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                   />
@@ -150,7 +157,7 @@ export default function ContactSection({ textEnter, textLeave }) {
                   disabled={loading}
                   className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-6 rounded-xl flex items-center justify-center gap-4 transition-all active:scale-95 disabled:opacity-50 cursor-none shadow-[0_0_30px_rgba(220,38,38,0.2)]"
                 >
-                  {loading ? "TRANSMITTING..." : <><Send size={20} className="rotate-[-10deg]" /> EXECUTE UPLINK</>}
+                  {loading ? <Loader2 className="animate-spin" /> : <><Send size={20} className="rotate-[-10deg]" /> EXECUTE UPLINK</>}
                 </button>
               </div>
             </form>

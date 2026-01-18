@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Mail, Trash2, Clock, User, MessageSquare, 
   CheckCircle, RefreshCcw, ShieldAlert, Send, 
-  ExternalLink, Hash, Calendar
+  Hash, Calendar
 } from 'lucide-react'
 import { supabase } from '../../Supabase/supabase'
 import toast, { Toaster } from 'react-hot-toast'
@@ -15,15 +15,14 @@ export default function Inbox() {
 
   const fetchMessages = async () => {
     setLoading(true)
-    console.log("📡 INBOX: Syncing with Supabase...")
     
+    // 🟢 FETCH FROM DB
     const { data, error } = await supabase
       .from('contact_messages')
       .select('*')
       .order('created_at', { ascending: false })
     
     if (error) {
-      console.error("❌ INBOX ERROR:", error.message)
       toast.error("Intel Link Failed")
     } else {
       setMessages(data || [])
@@ -58,7 +57,7 @@ export default function Inbox() {
     <div className="flex flex-col h-[calc(100vh-120px)] bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 transition-colors">
       <Toaster position="top-right" />
       
-      {/* 🟢 HEADER */}
+      {/* HEADER */}
       <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
         <div>
           <h2 className="text-xl font-black tracking-tighter flex items-center gap-2 dark:text-white uppercase italic">
@@ -72,7 +71,7 @@ export default function Inbox() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* 🟢 LEFT SIDEBAR: MESSAGE LIST */}
+        {/* LEFT SIDEBAR: MESSAGE LIST */}
         <div className="w-full md:w-1/3 border-r border-slate-200 dark:border-white/10 overflow-y-auto bg-slate-50/20 dark:bg-transparent">
           {messages.length === 0 && !loading ? (
             <div className="p-20 text-center opacity-40">
@@ -97,19 +96,16 @@ export default function Inbox() {
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 font-mono tracking-tight">"{msg.message}"</p>
                 <div className="mt-3 flex items-center justify-between">
-                   <div className="flex items-center gap-2 text-[9px] text-slate-400 font-mono uppercase">
-                     <Clock size={10} /> {new Date(msg.created_at).toLocaleDateString()}
-                   </div>
-                   <div className="text-[8px] px-2 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-500 font-bold uppercase tracking-tighter">
-                     ID: {msg.id.slice(0, 5)}
-                   </div>
+                    <div className="flex items-center gap-2 text-[9px] text-slate-400 font-mono uppercase">
+                      <Clock size={10} /> {new Date(msg.created_at).toLocaleDateString()}
+                    </div>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* 🟢 RIGHT SIDEBAR: MESSAGE VIEW */}
+        {/* RIGHT SIDEBAR: MESSAGE VIEW */}
         <div className="hidden md:flex flex-1 bg-slate-50/50 dark:bg-slate-900/50 flex-col relative overflow-y-auto">
           <AnimatePresence mode="wait">
             {selectedMsg ? (
@@ -132,11 +128,12 @@ export default function Inbox() {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    {/* 🟢 REPLY BUTTON: OPENS GMAIL/OUTLOOK */}
                     <a 
-                      href={`mailto:${selectedMsg.email}?subject=FireWatch Response&body=Hello ${selectedMsg.name},%0D%0A%0D%0AReceived: "${selectedMsg.message}"%0D%0A%0D%0AOur Command team has reviewed your request...`}
+                      href={`mailto:${selectedMsg.email}?subject=FireWatch Response: Re: Inquiry&body=Hello ${selectedMsg.name},%0D%0A%0D%0AWe received your message: "${selectedMsg.message}"%0D%0A%0D%0AStatus: ACKNOWLEDGED.%0D%0A%0D%0ARegards,%0D%0AFireWatch Command`}
                       className="px-6 py-3 bg-white dark:bg-blue-600 text-slate-900 dark:text-white rounded-2xl font-black text-xs flex items-center gap-2 shadow-lg hover:scale-105 transition-all active:scale-95"
                     >
-                      <Send size={16} /> REPLY
+                      <Send size={16} /> SEND REPLY
                     </a>
                     <button 
                       onClick={() => deleteMessage(selectedMsg.id)}
@@ -149,15 +146,15 @@ export default function Inbox() {
 
                 {/* Message Body */}
                 <div className="bg-white dark:bg-slate-800 p-12 rounded-[3rem] border border-slate-200 dark:border-white/10 shadow-2xl relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-8 opacity-5">
-                      <ShieldAlert size={140} />
-                   </div>
-                   <div className="flex items-center gap-3 text-blue-500 mb-8 font-mono text-[10px] font-black uppercase tracking-[0.4em]">
-                     <MessageSquare size={14} /> Transmission_Payload
-                   </div>
-                   <p className="text-slate-800 dark:text-slate-100 text-xl leading-[1.6] font-mono whitespace-pre-wrap relative z-10 tracking-tight">
-                     "{selectedMsg.message}"
-                   </p>
+                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                       <ShieldAlert size={140} />
+                    </div>
+                    <div className="flex items-center gap-3 text-blue-500 mb-8 font-mono text-[10px] font-black uppercase tracking-[0.4em]">
+                      <MessageSquare size={14} /> Transmission_Payload
+                    </div>
+                    <p className="text-slate-800 dark:text-slate-100 text-xl leading-[1.6] font-mono whitespace-pre-wrap relative z-10 tracking-tight">
+                      "{selectedMsg.message}"
+                    </p>
                 </div>
 
                 {/* Footer Meta Grid */}

@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 
-// 🟢 Import Separate Navbar (With Modal Logic)
+// Navbar
 import LandingNavbar from './LandingNavbar'
 
-// Sub-components
+// Sections
 import Hero from './Hero'
 import Ticker from './Ticker' 
 import Workflow from './Workflow'
@@ -15,18 +15,18 @@ import RegistryCTA from './RegistryCTA'
 import Stats from './Stats'
 import Footer from './Footer'
 
+// 🟢 NEW CONTACT SECTION IMPORT
+import ContactSection from './ContactSection'
+
 export default function LandingPage({ user, onLogout }) {
   const navigate = useNavigate()
   
   // --- GATEKEEPER LOGIC ---
   const handleRestrictedAccess = (path) => {
-    // Some paths like 'Report Hazard' might be public
     if (path === '/registry' || path === '/report') {
          navigate(path)
          return
     }
-
-    // Others require login
     if (user) {
         if(path) navigate(path)
     } else {
@@ -35,7 +35,7 @@ export default function LandingPage({ user, onLogout }) {
     }
   }
 
-  // --- CUSTOM CURSOR LOGIC ---
+  // --- CUSTOM CURSOR ---
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [cursorVariant, setCursorVariant] = useState("default")
 
@@ -81,7 +81,6 @@ export default function LandingPage({ user, onLogout }) {
         <div className="w-1 h-1 bg-red-500 rounded-full"></div>
       </motion.div>
 
-      {/* 🟢 SEPARATE NAVBAR COMPONENT */}
       <LandingNavbar 
          navigate={navigate} 
          textEnter={textEnter} 
@@ -90,7 +89,6 @@ export default function LandingPage({ user, onLogout }) {
          onLogout={onLogout} 
       />
 
-      {/* Hero Section */}
       <Hero 
          navigate={navigate} 
          textEnter={textEnter} 
@@ -101,7 +99,6 @@ export default function LandingPage({ user, onLogout }) {
       <Ticker />
       <Workflow textEnter={textEnter} textLeave={textLeave} />
       
-      {/* Features - Click restricted for effect */}
       <div onClick={() => !user && handleRestrictedAccess(null)}> 
         <Features textEnter={textEnter} textLeave={textLeave} />
       </div>
@@ -113,6 +110,9 @@ export default function LandingPage({ user, onLogout }) {
       />
       
       <Stats />
+      
+      {/* 🟢 2. ADD NEW CONTACT SECTION */}
+      <ContactSection textEnter={textEnter} textLeave={textLeave} />
       
       <Footer 
         navigate={navigate} 
