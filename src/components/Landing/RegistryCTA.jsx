@@ -4,7 +4,7 @@ import { Megaphone, FileWarning, ShieldCheck, Activity } from 'lucide-react'
 
 export default function RegistryCTA({ navigate, textEnter, textLeave }) {
   return (
-    <section className="py-32 px-6 bg-black relative overflow-hidden">
+    <section className="py-32 px-6 bg-salate-900 relative overflow-hidden">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
       <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
