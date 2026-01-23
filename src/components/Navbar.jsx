@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
 import LogoutModal from './LogoutModal'
+import Chatbot from './Chatbot'
 
 // Backend Config
 const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
@@ -94,7 +95,7 @@ export default function Navbar({ user, onLogout }) {
           onLogout()
         }}
       />
-
+        <Chatbot />
       <nav className="sticky top-0 z-[60] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 transition-colors duration-300">
         <div className="w-full px-4 md:px-8">
           <div className="flex items-center justify-between h-16">
