@@ -3,13 +3,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Flame, LayoutDashboard, FileWarning, Plane,
   Download, User, LogOut, Sun, Moon, Menu, X,
-  // 🟢 Added MapPin to imports
-  Mail, Bell, ChevronRight, Loader2, ShieldAlert, MapPin
+  Mail, Bell, ChevronRight, Loader2, ShieldAlert, MapPin, Radio
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
 import LogoutModal from './LogoutModal'
-import Chatbot from './Chatbot'
+import Chatbot from './Chatbot' // 🟢 CHATBOT IMPORTED
 
 // Backend Config
 const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
@@ -23,8 +22,7 @@ export default function Navbar({ user, onLogout }) {
   const [notifications, setNotifications] = useState([])
   const [showNotifs, setShowNotifs] = useState(false)
   const [loading, setLoading] = useState(false)
-
-  // Modal State
+  const [isSimulated, setIsSimulated] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const isActive = (path) => location.pathname === path
@@ -32,10 +30,9 @@ export default function Navbar({ user, onLogout }) {
   useEffect(() => {
     const fetchAlerts = async () => {
       setLoading(true)
-      
       let highRisk = []
+      
       try {
-        // 1. Fetch Data (Using correct params)
         const res = await fetch(`${BACKEND_URL}/api/fires/get_hight_regions_area`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -43,37 +40,56 @@ export default function Navbar({ user, onLogout }) {
         })
         const result = await res.json()
 
-        // 2. ROBUST PARSING
-        let parsedData = result.data;
-        if (typeof result.data === 'string') {
-            try { parsedData = JSON.parse(result.data); } catch (e) { console.error("Inner JSON Parse Error", e); }
+        // 🟢 FIX 1: Handle Array Format Directly (Matches DroneController)
+        if (Array.isArray(result.data)) {
+           highRisk = result.data.map(item => ({
+              id: `${item.latitude}-${item.longitude}`, // Unique ID
+              lat: Number(item.latitude),
+              lon: Number(item.longitude),
+              temp: Number(item.brightness) || 300,
+              message: `HIGH HEAT: Sector ${item.latitude.toFixed(2)}`
+           }))
+        } else if (typeof result.data === 'string') {
+            try { 
+                const parsed = JSON.parse(result.data);
+                if (Array.isArray(parsed)) {
+                    highRisk = parsed.map(item => ({
+                        id: `${item.latitude}-${item.longitude}`,
+                        lat: Number(item.latitude),
+                        lon: Number(item.longitude),
+                        temp: Number(item.brightness) || 300,
+                        message: `HIGH HEAT: Sector ${item.latitude.toFixed(2)}`
+                    }))
+                }
+            } catch (e) {}
         }
 
-        // 3. MAPPING
-        if (parsedData && parsedData.latitude) {
-          highRisk = Object.keys(parsedData.latitude).map(key => ({
-            id: key,
-            lat: parsedData.latitude[key],
-            lon: parsedData.longitude?.[key] || 0,
-            temp: Number(parsedData.brightness?.[key]) || 300,
-            message: `HIGH HEAT: Sector ${key}`
-          }))
-          // Sort by hottest first
-          .sort((a, b) => b.temp - a.temp)
-          .slice(0, 10);
+        // Sort by temp
+        highRisk.sort((a, b) => b.temp - a.temp)
+
+        if (highRisk.length > 0) {
+            setIsSimulated(false)
+            setNotifications(highRisk.slice(0, 10)) // Limit to top 10
+        } else {
+            throw new Error("No active fires found")
         }
-          
+
       } catch (e) {
-        console.error("Navbar Alert Sync Failed:", e)
+        console.warn("Using Simulation Data:", e.message)
+        setIsSimulated(true)
+        setNotifications([
+          { id: 'sim-1', lat: 28.6139, lon: 77.2090, temp: 350, message: 'CRITICAL: Sector Alpha' },
+          { id: 'sim-2', lat: 26.8467, lon: 80.9462, temp: 342, message: 'HIGH HEAT: Zone Beta' },
+          { id: 'sim-3', lat: 25.3176, lon: 82.9739, temp: 338, message: 'WARNING: Sector Gamma' },
+          { id: 'sim-4', lat: 27.1767, lon: 78.0081, temp: 335, message: 'CAUTION: Zone Delta' },
+        ])
       } finally {
         setLoading(false)
       }
-
-      setNotifications(highRisk)
     }
 
     fetchAlerts()
-    const interval = setInterval(fetchAlerts, 120000) // Refresh every 2 mins
+    const interval = setInterval(fetchAlerts, 60000) 
     return () => clearInterval(interval)
   }, [])
 
@@ -95,7 +111,10 @@ export default function Navbar({ user, onLogout }) {
           onLogout()
         }}
       />
-        <Chatbot />
+      
+      {/* 🟢 Chatbot is here */}
+      <Chatbot />
+
       <nav className="sticky top-0 z-[60] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 transition-colors duration-300">
         <div className="w-full px-4 md:px-8">
           <div className="flex items-center justify-between h-16">
@@ -129,7 +148,6 @@ export default function Navbar({ user, onLogout }) {
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               </button>
 
-              {/* 🔔 NOTIFICATIONS ICON */}
               <div className="relative">
                 <button onClick={() => setShowNotifs(!showNotifs)} className={`p-2 rounded-full transition-colors relative ${showNotifs ? 'bg-red-50 text-red-600 dark:bg-red-900/20' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'}`}>
                   <Bell size={18} />
@@ -150,6 +168,12 @@ export default function Navbar({ user, onLogout }) {
                         {!loading && <span className={`text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold ${notifications.length > 0 ? 'bg-red-600' : 'bg-slate-400'}`}>{notifications.length}</span>}
                       </div>
                       
+                      {isSimulated && !loading && (
+                          <div className="mb-2 flex items-center gap-2 justify-center bg-yellow-100 dark:bg-yellow-900/20 py-1 rounded text-[9px] font-bold text-yellow-700 dark:text-yellow-400">
+                              <Radio size={10} className="animate-pulse"/> SIMULATION DATA ACTIVE
+                          </div>
+                      )}
+
                       <div className="max-h-64 overflow-y-auto space-y-2 custom-scrollbar relative min-h-[100px]">
                         {loading ? (
                            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
@@ -163,7 +187,6 @@ export default function Navbar({ user, onLogout }) {
                                 <div>
                                   <p className="text-[10px] font-black text-red-700 dark:text-red-400 uppercase">{n.message}</p>
                                   <p className="text-[9px] text-slate-500 font-mono mt-0.5">Temp: {n.temp.toFixed(0)}K</p>
-                                  {/* 🟢 ADDED COORDINATES HERE */}
                                   <p className="text-[9px] text-slate-400 font-mono mt-0.5 flex items-center gap-1">
                                      <MapPin size={8} />
                                      {n.lat.toFixed(4)}, {n.lon.toFixed(4)}
