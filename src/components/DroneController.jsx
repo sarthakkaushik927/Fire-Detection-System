@@ -189,7 +189,7 @@ export default function DroneController() {
       <div className="relative z-10 max-w-[1600px] mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 h-full overflow-hidden">
         
         {/* LEFT: REAL DATA FEED */}
-        <div className="lg:col-span-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-3xl border border-slate-200 dark:border-white/10 p-4 flex flex-col h-full overflow-hidden shadow-lg">
+        <div className="lg:col-span-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-3xl border border-slate-200 dark:border-white/10 p-4 flex flex-col max-h-[80vh] overflow-hidden shadow-lg">
            
            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200 dark:border-white/10">
               <Signal size={18} className={loadingTargets ? "text-yellow-500 animate-pulse" : "text-green-500"}/>
