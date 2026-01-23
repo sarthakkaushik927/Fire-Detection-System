@@ -240,7 +240,7 @@ const Hero = ({ navigate, textEnter, textLeave }) => {
           <LiquidButton variant="primary" onClick={() => navigate('/auth')} className="w-full md:w-64">
             Initialize Command
           </LiquidButton>
-          <LiquidButton variant="secondary" onClick={() => navigate('/report')} className="w-full md:w-64">
+          <LiquidButton variant="secondary" onClick={() => navigate('/registry')} className="w-full md:w-64">
             Report Incident
           </LiquidButton>
         </motion.div>
