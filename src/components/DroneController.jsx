@@ -12,7 +12,7 @@ import toast, { Toaster } from 'react-hot-toast'
 // 🟢 YOUTUBE VIDEO URL
 const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/Z8_YeArWzD4?autoplay=1&mute=1&controls=0&loop=1&playlist=Z8_YeArWzD4"
 
-// 🟢 NEW KRYPTONITE BACKEND
+// 🟢 BACKEND URL
 const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
 
 export default function DroneController() {
@@ -139,17 +139,18 @@ export default function DroneController() {
 
   const handleDeploy = () => {
     setStatus('DEPLOYING')
-    toast("Engaging Rotors...", { icon: '⚙️' })
+    toast("ENGAGING ROTORS...", { icon: '🚀' })
     let p = 0
+    // 🟢 FASTER DEPLOYMENT: 15ms interval (approx 1.5 seconds total)
     const interval = setInterval(() => {
       p += 1
       setProgress(p)
       if (p >= 100) {
         clearInterval(interval)
         setStatus('ACTIVE')
-        toast.success("Drone Airborne & En Route", { duration: 5000 })
+        toast.success("Drone Airborne & En Route", { duration: 3000 })
       }
-    }, 30)
+    }, 15)
   }
 
   const handleStop = () => {
@@ -169,8 +170,7 @@ export default function DroneController() {
   }
 
   return (
-    // 🟢 FIX 1: Mobile = min-h-screen + auto overflow. Desktop = h-screen + hidden overflow.
-    <div className="min-h-screen md:h-screen md:max-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white font-mono relative transition-colors duration-300 flex flex-col md:overflow-hidden overflow-y-auto">
+    <div className="min-h-screen md:h-screen md:max-h-screen w-full overflow-x-hidden bg-slate-50 dark:bg-black text-slate-900 dark:text-white font-mono relative transition-colors duration-300 flex flex-col md:overflow-hidden overflow-y-auto">
       
       <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
 
@@ -179,7 +179,7 @@ export default function DroneController() {
       </div>
 
       {/* TOP BAR */}
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-center p-4 md:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-300 dark:border-white/10 gap-4 shrink-0">
+      <div className="relative z-10 flex flex-col md:flex-row justify-between items-center p-4 md:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-300 dark:border-white/10 gap-4 shrink-0 w-full">
         <div className="w-full md:w-auto flex justify-between md:justify-start items-center">
             <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 hover:text-red-600 dark:hover:text-red-500 transition font-bold text-sm md:text-base">
               <ChevronLeft size={18} /> ABORT MISSION
@@ -199,11 +199,10 @@ export default function DroneController() {
         </div>
       </div>
 
-      {/* MAIN CONTENT - SCROLLS ON MOBILE, FIXED ON DESKTOP */}
-      <div className="relative z-10 max-w-[1600px] mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 md:h-full md:overflow-hidden">
+      {/* MAIN CONTENT */}
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 md:h-full md:overflow-hidden">
         
         {/* LEFT: REAL DATA FEED */}
-        {/* 🟢 FIX 2: Fixed height on mobile (400px) so it doesn't smash content, full height on desktop */}
         <div className="lg:col-span-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-3xl border border-slate-200 dark:border-white/10 p-4 flex flex-col shadow-lg h-[400px] md:h-full md:max-h-[80vh]">
             
             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200 dark:border-white/10 shrink-0">
@@ -276,7 +275,6 @@ export default function DroneController() {
         </div>
 
         {/* CENTER: VISUALIZER */}
-        {/* 🟢 FIX 3: Fixed height on mobile (300px), full height on desktop */}
         <div className="lg:col-span-6 flex flex-col relative rounded-3xl bg-slate-100 dark:bg-black border-[4px] border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl h-[300px] md:h-full">
           <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: `radial-gradient(${status === 'ACTIVE' ? '#22c55e' : '#ef4444'} 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
           
@@ -288,17 +286,55 @@ export default function DroneController() {
               </motion.div>
           ) : (
               <div className="flex-1 flex flex-col items-center justify-center relative z-10">
-                <div className={`w-[250px] h-[250px] border border-current rounded-full flex items-center justify-center relative transition-colors duration-500 ${status === 'ACTIVE' ? 'text-green-500 animate-pulse' : 'text-red-500'}`}>
-                    <div className="absolute inset-0 border-t-2 border-current rounded-full animate-spin-slow opacity-50"></div>
-                    <div className="absolute inset-4 border-b-2 border-current rounded-full animate-spin-reverse opacity-30"></div>
+                {/* 🟢 FAST CROSSHAIR: Spins at 5s per revolution (High Speed) */}
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  className={`w-[200px] h-[200px] md:w-[250px] md:h-[250px] border border-current rounded-full flex items-center justify-center relative ${status === 'ACTIVE' ? 'text-green-500' : 'text-red-500'}`}
+                >
+                    <div className="absolute inset-0 border-t-2 border-current rounded-full opacity-50"></div>
+                    <div className="absolute inset-4 border-b-2 border-current rounded-full opacity-30"></div>
                     <Crosshair size={32} className="opacity-80"/>
-                </div>
-                <motion.div className="absolute" initial={{ scale: 1 }} animate={status === 'DEPLOYING' ? { scale: [1, 0.8, 50], opacity: [1, 1, 0], rotate: [0, -10, 0] } : { y: [0, -10, 0] }} transition={{ duration: status === 'DEPLOYING' ? 3 : 2, ease: "easeInOut" }}>
+                </motion.div>
+
+                {/* 🟢 SUPERSONIC PLANE: 1.5s Deployment with Overshoot */}
+                <motion.div 
+                  className="absolute" 
+                  initial={{ scale: 1, y: 0 }} 
+                  animate={status === 'DEPLOYING' ? { 
+                      scale: [1, 0.9, 60], // Pull back slightly then MASSIVE ZOOM
+                      opacity: [1, 1, 0], 
+                      rotate: [0, -2, 0],
+                      y: [0, 10, -800] // Pull down slightly then LAUNCH
+                  } : { 
+                      y: [0, -10, 0] 
+                  }} 
+                  // Use 'backIn' easing for that "snap" effect
+                  transition={status === 'DEPLOYING' ? { duration: 1.5, ease: "backIn" } : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
                     <Plane size={80} className={`transition-colors duration-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] ${status === 'ACTIVE' ? 'text-green-500' : 'text-slate-800 dark:text-white'}`} />
                 </motion.div>
+
                 <div className="absolute bottom-10 w-full px-10 text-center">
                     {status === 'STANDBY' ? (
-                      <button onClick={handleDeploy} className="w-full bg-red-600 hover:bg-red-700 text-white py-5 rounded-2xl font-black text-xl tracking-[0.2em] shadow-[0_0_40px_rgba(220,38,38,0.4)] hover:scale-[1.02] transition-all">DEPLOY TO SECTOR</button>
+                      // 🟢 JUMPING BUTTON
+                      <motion.button 
+                        onClick={handleDeploy}
+                        animate={{
+                          y: [0, -4, 0],
+                          boxShadow: [
+                            "0 0 0px rgba(220,38,38,0.2)",
+                            "0 10px 25px rgba(220,38,38,0.5)",
+                            "0 0 0px rgba(220,38,38,0.2)"
+                          ]
+                        }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white py-4 md:py-5 rounded-2xl font-black text-lg md:text-xl tracking-[0.2em] border border-red-500"
+                      >
+                        DEPLOY TO SECTOR
+                      </motion.button>
                     ) : (
                       <div className="bg-black/80 backdrop-blur text-green-500 py-4 rounded-xl border border-green-500/30">
                           <p className="text-xs font-bold uppercase tracking-widest mb-2">Systems Engaging...</p>
@@ -311,7 +347,6 @@ export default function DroneController() {
         </div>
 
         {/* RIGHT: MINI-MAP */}
-        {/* 🟢 FIX 4: Fixed height on mobile (300px), full height on desktop */}
         <div className="lg:col-span-3 flex flex-col gap-4 h-[300px] md:h-full">
             <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-lg">
               <div className="absolute top-0 left-0 right-0 z-10 bg-slate-900/90 backdrop-blur p-3 flex justify-between items-center border-b border-white/10">

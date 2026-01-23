@@ -8,10 +8,19 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
 import LogoutModal from './LogoutModal'
-import Chatbot from './Chatbot' // 🟢 CHATBOT IMPORTED
+import Chatbot from './Chatbot'
 
 // Backend Config
 const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
+
+// 🟢 NEW: Helper to create cool names like "ALPHA-9" from coords
+const generateSectorName = (lat, lon) => {
+  const zones = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'ZULU', 'OMEGA', 'TITAN', 'NOVA'];
+  // Use coordinates to pick a stable name (so it doesn't change on refresh)
+  const index = Math.floor((Math.abs(lat) + Math.abs(lon)) * 100) % zones.length;
+  const subSector = Math.floor((Math.abs(lat - lon) * 1000) % 99) + 1;
+  return `${zones[index]}-${subSector}`; // e.g., "BRAVO-42"
+}
 
 export default function Navbar({ user, onLogout }) {
   const location = useLocation()
@@ -40,36 +49,30 @@ export default function Navbar({ user, onLogout }) {
         })
         const result = await res.json()
 
-        // 🟢 FIX 1: Handle Array Format Directly (Matches DroneController)
+        let rows = []
         if (Array.isArray(result.data)) {
-           highRisk = result.data.map(item => ({
-              id: `${item.latitude}-${item.longitude}`, // Unique ID
-              lat: Number(item.latitude),
-              lon: Number(item.longitude),
-              temp: Number(item.brightness) || 300,
-              message: `HIGH HEAT: Sector ${item.latitude.toFixed(2)}`
-           }))
+           rows = result.data
         } else if (typeof result.data === 'string') {
             try { 
                 const parsed = JSON.parse(result.data);
-                if (Array.isArray(parsed)) {
-                    highRisk = parsed.map(item => ({
-                        id: `${item.latitude}-${item.longitude}`,
-                        lat: Number(item.latitude),
-                        lon: Number(item.longitude),
-                        temp: Number(item.brightness) || 300,
-                        message: `HIGH HEAT: Sector ${item.latitude.toFixed(2)}`
-                    }))
-                }
+                if (Array.isArray(parsed)) rows = parsed;
             } catch (e) {}
         }
 
-        // Sort by temp
+        // 🟢 FIX: Use generateSectorName for cool names instead of "28.12"
+        highRisk = rows.map(item => ({
+            id: `${item.latitude}-${item.longitude}`,
+            lat: Number(item.latitude),
+            lon: Number(item.longitude),
+            temp: Number(item.brightness) || 300,
+            message: `HIGH HEAT: SECTOR ${generateSectorName(Number(item.latitude), Number(item.longitude))}`
+        }))
+
         highRisk.sort((a, b) => b.temp - a.temp)
 
         if (highRisk.length > 0) {
             setIsSimulated(false)
-            setNotifications(highRisk.slice(0, 10)) // Limit to top 10
+            setNotifications(highRisk.slice(0, 10))
         } else {
             throw new Error("No active fires found")
         }
@@ -78,10 +81,10 @@ export default function Navbar({ user, onLogout }) {
         console.warn("Using Simulation Data:", e.message)
         setIsSimulated(true)
         setNotifications([
-          { id: 'sim-1', lat: 28.6139, lon: 77.2090, temp: 350, message: 'CRITICAL: Sector Alpha' },
-          { id: 'sim-2', lat: 26.8467, lon: 80.9462, temp: 342, message: 'HIGH HEAT: Zone Beta' },
-          { id: 'sim-3', lat: 25.3176, lon: 82.9739, temp: 338, message: 'WARNING: Sector Gamma' },
-          { id: 'sim-4', lat: 27.1767, lon: 78.0081, temp: 335, message: 'CAUTION: Zone Delta' },
+          { id: 'sim-1', lat: 28.6139, lon: 77.2090, temp: 350, message: 'CRITICAL: SECTOR ALPHA-1' },
+          { id: 'sim-2', lat: 26.8467, lon: 80.9462, temp: 342, message: 'HIGH HEAT: ZONE BETA-7' },
+          { id: 'sim-3', lat: 25.3176, lon: 82.9739, temp: 338, message: 'WARNING: SECTOR GAMMA-9' },
+          { id: 'sim-4', lat: 27.1767, lon: 78.0081, temp: 335, message: 'CAUTION: ZONE DELTA-4' },
         ])
       } finally {
         setLoading(false)
@@ -112,7 +115,6 @@ export default function Navbar({ user, onLogout }) {
         }}
       />
       
-      {/* 🟢 Chatbot is here */}
       <Chatbot />
 
       <nav className="sticky top-0 z-[60] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 transition-colors duration-300">
