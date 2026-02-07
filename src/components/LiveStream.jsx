@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useDroneStream } from '../hooks/useDroneStream'
 
 
-const WEBSOCKET_URL = "http://51.20.135.84:8002/api/streamFireImage/ws_fire_image" 
+const WEBSOCKET_URL = "wss://fire.anurag11.me/api/streamFireImage/ws_fire_image" 
 
 const LiveStream = () => {
   const { theme } = useTheme()
