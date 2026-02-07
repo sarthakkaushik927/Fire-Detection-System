@@ -30,7 +30,7 @@ export default function HighRiskRegions({ highRiskPoints, loading }) {
             </h3>
             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Thermal Anomalies Detected</p>
         </div>
-        <span className="bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-xs font-black ">
+        <span className="bg-red-500/10 text-red-500 px-0 py-1 rounded-full text-xs font-black ">
             {highRiskPoints.length} DETECTED
         </span>
       </div>

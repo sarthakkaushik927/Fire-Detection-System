@@ -1,26 +1,19 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 
-// 🟢 CONFIGURATION
 const API_URL = "https://keryptonite-8k3u.vercel.app/chat";
 const USER_ID = "ranger_alpha_1";
 
-/**
- * Parses raw text into a formatted React component.
- * Handles: **Bold**, *Bullets*, # Headings, and \n newlines.
- */
+// --- Formatted Text Component (Unchanged) ---
 const FormattedText = React.memo(({ text }) => {
   if (!text) return <span className="text-slate-400 italic">No content.</span>;
-
-  // Handle escaped newlines often sent by Python/Node backends
   const safeText = text.replace(/\\n/g, '\n');
 
   return safeText.split('\n').map((line, i) => {
     const trimmed = line.trim();
     if (!trimmed) return <div key={`br-${i}`} className="h-2" />;
 
-    // Headings (lines starting with #)
     if (trimmed.startsWith('#')) {
       const headingText = trimmed.replace(/^#+\s*/, '');
       return (
@@ -30,7 +23,6 @@ const FormattedText = React.memo(({ text }) => {
       );
     }
 
-    // List Items
     const isBullet = trimmed.startsWith('* ') || trimmed.startsWith('- ');
     const isNumbered = /^\d+\.\s/.test(trimmed);
     
@@ -38,7 +30,6 @@ const FormattedText = React.memo(({ text }) => {
     if (isBullet) cleanLine = trimmed.substring(2);
     if (isNumbered) cleanLine = trimmed.replace(/^\d+\.\s/, '');
 
-    // Parse Bold Syntax (**text**)
     const parts = cleanLine.split(/(\*\*.*?\*\*)/g).map((part, j) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
@@ -65,7 +56,10 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  // Initial Welcome Message
+  // 🟢 New Refs for Dragging Logic
+  const constraintsRef = useRef(null);
+  const isDragging = useRef(false);
+
   const [messages, setMessages] = useState([
     { 
       id: 'init-1',
@@ -77,14 +71,12 @@ export default function Chatbot() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isOpen]);
 
-  // Focus input when opened
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
@@ -98,7 +90,6 @@ export default function Chatbot() {
     const userMsg = input.trim();
     const tempId = Date.now().toString();
 
-    // 1. Add User Message
     setMessages(prev => [...prev, { id: tempId, sender: 'user', text: userMsg }]);
     setInput("");
     setIsLoading(true);
@@ -116,24 +107,21 @@ export default function Chatbot() {
         })
       });
 
-      // 2. Check for HTTP Errors
       if (!response.ok) {
         let errorMsg = `Server Error (${response.status})`;
         try {
           const errorData = await response.json();
           if (errorData.detail) errorMsg = errorData.detail;
-        } catch (_) { /* ignore JSON parse error on failure */ }
+        } catch (_) { }
         throw new Error(errorMsg);
       }
 
-      // 3. Parse Data
       const data = await response.json();
       
       if (!data || !data.response) {
         throw new Error("Invalid response format from server");
       }
 
-      // 4. Add AI Response
       setMessages(prev => [...prev, { 
         id: Date.now().toString(), 
         sender: 'ai', 
@@ -158,8 +146,16 @@ export default function Chatbot() {
     }
   };
 
+  // 🟢 Helper to handle click vs drag
+  const handleToggle = () => {
+    if (!isDragging.current) {
+      setIsOpen(!isOpen);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[9999] pointer-events-none flex flex-col items-end justify-end p-4 sm:p-6 overflow-hidden">
+    // 🟢 Added ref={constraintsRef} here to define the draggable area
+    <div ref={constraintsRef} className="fixed inset-0 z-[9999] pointer-events-none flex flex-col items-end justify-end p-4 sm:p-6 overflow-hidden">
       
       <AnimatePresence>
         {isOpen && (
@@ -201,7 +197,6 @@ export default function Chatbot() {
                   key={msg.id}
                   className={`flex gap-2 sm:gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                 >
-                  {/* Avatar */}
                   <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 border ${
                     msg.sender === 'user' 
                       ? 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700' 
@@ -218,7 +213,6 @@ export default function Chatbot() {
                     )}
                   </div>
 
-                  {/* Bubble */}
                   <div className={`max-w-[85%] p-2.5 sm:p-4 rounded-2xl shadow-sm ${
                     msg.sender === 'user' 
                       ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-tr-none' 
@@ -231,7 +225,6 @@ export default function Chatbot() {
                 </div>
               ))}
               
-              {/* Loading Indicator */}
               {isLoading && (
                 <div className="flex gap-3">
                    <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center border border-orange-200 dark:border-orange-500/30">
@@ -270,13 +263,23 @@ export default function Chatbot() {
         )}
       </AnimatePresence>
 
-      {/* --- TOGGLE BUTTON --- */}
+      {/* --- DRAGGABLE TOGGLE BUTTON --- */}
       <motion.button
+        // 🟢 Enable dragging
+        drag
+        // 🟢 Constrain to the outer div
+        dragConstraints={constraintsRef}
+        // 🟢 Snap back elasticity
+        dragElastic={0.1}
+        // 🟢 Prevent drag from triggering click
+        onDragStart={() => (isDragging.current = true)}
+        onDragEnd={() => setTimeout(() => (isDragging.current = false), 100)}
+        
         initial={{ scale: 0, rotate: 180 }}
         animate={{ 
           scale: 1, 
           rotate: 0,
-          y: [0, -5, 0],
+          // Removed the Y bounce animation as it conflicts with user dragging
           boxShadow: [
             "0 0 0px rgba(249,115,22,0.4)",
             "0 0 20px rgba(249,115,22,0.6)",
@@ -284,13 +287,15 @@ export default function Chatbot() {
           ]
         }}
         transition={{
-          y: { duration: 2.5, repeat: Infinity, ease: "easeInOut" },
           boxShadow: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
         }}
         whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="pointer-events-auto fixed bottom-6 right-4 sm:right-6 p-4 bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-full border border-white/20 backdrop-blur-md flex items-center justify-center group z-[100]"
+        whileTap={{ scale: 0.9, cursor: "grabbing" }}
+        
+        onClick={handleToggle}
+        className="pointer-events-auto cursor-grab active:cursor-grabbing p-4 bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-full border border-white/20 backdrop-blur-md flex items-center justify-center group z-[100] shadow-2xl"
+        // 🟢 Remove fixed positioning so transform works better for dragging, or keep fixed if initial placement matters
+        style={{ position: 'absolute', bottom: '1.5rem', right: '1.5rem' }} 
       >
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
