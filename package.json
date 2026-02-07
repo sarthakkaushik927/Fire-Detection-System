@@ -21,6 +21,7 @@
     "idb": "^8.0.3",
     "lamina": "^1.2.2",
     "lucide-react": "^0.562.0",
+    "mapbox-gl": "^3.18.1",
     "postprocessing": "^6.38.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

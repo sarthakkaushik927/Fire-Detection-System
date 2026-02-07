@@ -1,382 +1,338 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Crosshair, Plane, PhoneCall, ChevronLeft, MapPin, 
-  Wind, Thermometer, Battery, CheckCircle2, Target, AlertTriangle, 
-  Video, Maximize, Compass, LocateFixed, RefreshCw, Flame, Signal, 
-  Square, Map as MapIcon, Navigation, Radio
-} from 'lucide-react'
-import toast, { Toaster } from 'react-hot-toast'
+import React, { useEffect, useRef, useState } from 'react'
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import { Menu, X, Locate } from 'lucide-react'
+import toast from 'react-hot-toast'
 
-// 🟢 YOUTUBE VIDEO URL
-const YOUTUBE_EMBED_URL = "https://www.youtube.com/embed/Z8_YeArWzD4?autoplay=1&mute=1&controls=0&loop=1&playlist=Z8_YeArWzD4"
+import { getDistance, calculateNewPos } from '../utils/geoUtils'
+import DroneSidebar from './drone/DroneSidebar'
+import VirtualJoysticks from './drone/VirtualJoysticks'
 
-// 🟢 BACKEND URL
-const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
+mapboxgl.config.telemetry = false
 
-export default function DroneController() {
-  const navigate = useNavigate()
-  const location = useLocation()
+const DroneController = () => {
+  const [telemetry, setTelemetry] = useState({
+    alt: 120, speed: 0, battery: 88, satellites: 14, signal: 92, distanceRemaining: 0
+  })
+
+  const [baseLat, setBaseLat] = useState('35.1691')
+  const [baseLng, setBaseLng] = useState('138.7189')
+  const [targetLat, setTargetLat] = useState('35.3397')
+  const [targetLng, setTargetLng] = useState('138.7265')
   
-  // Data States
-  const [allTargets, setAllTargets] = useState(location.state?.allTargets || [])
-  const [activeTarget, setActiveTarget] = useState(location.state?.target || { lat: 28.6139, lon: 77.2090 })
-  const [loadingTargets, setLoadingTargets] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState(new Date())
-  const [isSimulated, setIsSimulated] = useState(false)
+  const [isLocked, setIsLocked] = useState(false)
+  const [status, setStatus] = useState('IDLE')
+  const [isSidebarOpen, setSidebarOpen] = useState(false)
+  const [cameraFollow, setCameraFollow] = useState(true)
 
-  // Map State
-  const [mapHtml, setMapHtml] = useState('')
-  const [mapLoading, setMapLoading] = useState(false)
+  const mapContainerRef = useRef(null)
+  const mapRef = useRef(null)
+  const animationFrameRef = useRef(null)
+  const dronePosRef = useRef([138.7189, 35.1691])
 
-  // Manual Input State
-  const [manualLat, setManualLat] = useState(activeTarget.lat)
-  const [manualLon, setManualLon] = useState(activeTarget.lon)
-  
-  // Drone State
-  const [status, setStatus] = useState('STANDBY') 
-  const [progress, setProgress] = useState(0)
-
-  // 1. INITIAL FETCH
   useEffect(() => {
-    fetchTargets()
-    fetchMapData()
-    toast.success("Tactical Command Interface Loaded", { icon: '🚁' })
-  }, [])
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYW51dXUxMTExMTExMSIsImEiOiJjbWxiend6dGUwcWlpM2ZzOTBseWZjenpqIn0.UmHLNCHiLOb8XLa0JvMmJQ'
 
-  // Sync Manual Inputs
-  useEffect(() => {
-    setManualLat(activeTarget.lat)
-    setManualLon(activeTarget.lon)
-  }, [activeTarget])
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/standard-satellite',
+      center: [parseFloat(baseLng), parseFloat(baseLat)],
+      zoom: 14,
+      pitch: 70,
+      bearing: -20,
+      attributionControl: false,
+      keyboard: true 
+    })
 
-  // 🟢 FETCH TARGET LIST
-  const fetchTargets = async () => {
-    setLoadingTargets(true)
-    const toastId = toast.loading("Syncing Satellite Data...")
-    
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/fires/get_hight_regions_area`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country: "india", state: "up", day_range: 3, source: "VIIRS_SNPP_NRT" })
+    mapRef.current = map
+
+    map.on('load', () => {
+      const pointData = {
+        type: 'FeatureCollection',
+        features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [parseFloat(baseLng), parseFloat(baseLat)] } }]
+      }
+
+      map.addSource('drone-point', { type: 'geojson', data: pointData })
+      map.addLayer({
+        id: 'drone-point',
+        source: 'drone-point',
+        type: 'circle',
+        paint: {
+          'circle-radius': 8,
+          'circle-color': '#ef4444',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-emissive-strength': 1
+        }
       })
 
-      const result = await res.json()
-      
-      let rows = []
+      const canvas = map.getCanvas()
+      canvas.focus()
+      canvas.addEventListener('keydown', handleKeyDown, true)
+    })
+    
+    map.on('dragstart', () => setCameraFollow(false))
+    map.on('touchstart', () => setCameraFollow(false))
 
-      if (Array.isArray(result.data)) {
-         rows = result.data.map(item => ({
-            lat: Number(item.latitude),
-            lon: Number(item.longitude),
-            brightness: Number(item.brightness) || 300,
-            confidence: item.confidence || 'h'
-         }))
-      } 
-      else if (typeof result.data === 'string') {
-          try { 
-            const parsed = JSON.parse(result.data) 
-            if (Array.isArray(parsed)) {
-               rows = parsed.map(item => ({
-                  lat: Number(item.latitude),
-                  lon: Number(item.longitude),
-                  brightness: Number(item.brightness) || 300,
-                  confidence: item.confidence || 'h'
-               }))
-            }
-          } catch(e) {}
-      }
+    return () => {
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
+        if(mapRef.current) mapRef.current.remove()
+    }
+  }, [])
 
-      rows.sort((a, b) => b.brightness - a.brightness)
-
-      if (rows.length > 0) {
-         setAllTargets(rows)
-         setIsSimulated(false)
-         if (!location.state?.target) setActiveTarget(rows[0])
-         toast.success(`Targets Acquired: ${rows.length}`, { id: toastId })
-      } else {
-         throw new Error("No active fires found in data") 
-      }
-
-    } catch (e) {
-      console.warn("Using Simulation Data:", e)
-      setIsSimulated(true)
-      
-      const simData = [
-        { lat: 26.8467, lon: 80.9462, brightness: 340, confidence: 'h' },
-        { lat: 28.6139, lon: 77.2090, brightness: 310, confidence: 'h' },
-        { lat: 25.3176, lon: 82.9739, brightness: 338, confidence: 'h' },
-        { lat: 27.1767, lon: 78.0081, brightness: 305, confidence: 'h' }
-      ]
-      setAllTargets(simData)
-      if (!location.state?.target) setActiveTarget(simData[0])
-      
-      toast("Simulation Data Loaded", { id: toastId, icon: '⚠️' })
-    } finally {
-      setLastUpdated(new Date())
-      setLoadingTargets(false)
+  const teleportDrone = (lat, lng) => {
+    const newPos = [parseFloat(lng), parseFloat(lat)]
+    dronePosRef.current = newPos
+    updateDroneMarker(newPos)
+    if (mapRef.current) {
+        mapRef.current.flyTo({ center: newPos })
     }
   }
 
-  // 🟢 FETCH MINI-MAP
-  const fetchMapData = async () => {
-    setMapLoading(true)
+  const handlePaste = async (type) => {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/fires/get_locations`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country: "india", state: "up", day_range: 3 })
-      })
-      const data = await res.text()
-      setMapHtml(data)
-    } catch (e) { 
-        console.error("Map Fetch Error:", e) 
+      const text = await navigator.clipboard.readText()
+      if (!text) return toast.error("Clipboard empty")
+      const parts = text.split(/[\s,]+/)
+      let lat, lng
+
+      if (parts.length >= 2) {
+        lat = parseFloat(parts[0])
+        lng = parseFloat(parts[1])
+      } else {
+         return toast.error("Format: 'lat, lng'")
+      }
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        if (type === 'TARGET') {
+          setTargetLat(lat); setTargetLng(lng)
+        } else {
+          setBaseLat(lat); setBaseLng(lng)
+          teleportDrone(lat, lng)
+        }
+        toast.success("Coordinates Pasted")
+      } else {
+        toast.error("Invalid numbers")
+      }
+    } catch (err) {
+      toast.error("Allow clipboard permissions")
     }
-    finally { setMapLoading(false) }
+  }
+
+  const setFromMap = (type) => {
+     if (!mapRef.current) return
+     const { lng, lat } = mapRef.current.getCenter()
+     if (type === 'TARGET') {
+        setTargetLat(lat.toFixed(6)); setTargetLng(lng.toFixed(6))
+        toast.success("Target Set")
+     } else {
+        setBaseLat(lat.toFixed(6)); setBaseLng(lng.toFixed(6))
+        teleportDrone(lat, lng)
+        toast.success("Base Moved & Drone Reset")
+     }
+  }
+
+  const updateDroneMarker = (coords) => {
+    const map = mapRef.current
+    if (map && map.getSource('drone-point')) {
+        map.getSource('drone-point').setData({
+            type: 'FeatureCollection',
+            features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: coords } }]
+        })
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    const map = mapRef.current
+    if (!map) return
+    const key = e.key.toLowerCase()
+
+    if (['arrowup','arrowdown','arrowleft','arrowright'].includes(key)) {
+        setCameraFollow(false)
+        return 
+    }
+
+    if (key === 'r') map.zoomIn()
+    if (key === 'f') map.zoomOut()
+    if (key === 'q') map.easeTo({ bearing: map.getBearing() - 5 })
+    if (key === 'e') map.easeTo({ bearing: map.getBearing() + 5 })
+
+    if (status !== 'AUTOPILOT') {
+        const bearing = map.getBearing()
+        let angle = null
+        
+        if (key === 'w') angle = 0   
+        if (key === 's') angle = 180 
+        if (key === 'a') angle = 270 
+        if (key === 'd') angle = 90  
+
+        if (angle !== null) {
+            e.preventDefault() 
+            moveDroneByBearing(angle + bearing)
+        }
+    }
+  }
+
+  const moveDroneByBearing = (bearing) => {
+      const [lng, lat] = dronePosRef.current
+      const newPos = calculateNewPos(lat, lng, bearing, 30) 
+      
+      dronePosRef.current = newPos
+      updateDroneMarker(newPos)
+      
+      if (cameraFollow && mapRef.current) {
+          mapRef.current.easeTo({ center: newPos, duration: 100 })
+      }
+  }
+
+  const manualMoveDrone = (angleOffset) => {
+      if (status === 'AUTOPILOT' || !mapRef.current) return
+      const bearing = mapRef.current.getBearing()
+      moveDroneByBearing(bearing + angleOffset)
+  }
+  
+  const manualZoom = (dir) => dir === 'in' ? mapRef.current?.zoomIn() : mapRef.current?.zoomOut()
+  const manualRotate = (deg) => mapRef.current?.easeTo({ bearing: mapRef.current.getBearing() + deg })
+
+  const handleLockTarget = () => {
+    if (!targetLat || !targetLng) return toast.error("Invalid Target")
+    setIsLocked(true)
+    setStatus('LOCKED')
+    
+    teleportDrone(baseLat, baseLng)
+    setCameraFollow(true)
+
+    const map = mapRef.current
+    const start = [parseFloat(baseLng), parseFloat(baseLat)]
+    const end = [parseFloat(targetLng), parseFloat(targetLat)]
+    
+    const route = { type: 'Feature', geometry: { type: 'LineString', coordinates: [start, end] } }
+
+    if (map.getSource('mission-route')) {
+      map.getSource('mission-route').setData(route)
+    } else {
+      map.addSource('mission-route', { type: 'geojson', data: route })
+      map.addLayer({
+        id: 'mission-route', source: 'mission-route', type: 'line',
+        paint: { 'line-color': '#3b82f6', 'line-width': 4, 'line-opacity': 0.8 }
+      })
+    }
+    
+    const dist = getDistance(start[1], start[0], end[1], end[0])
+    setTelemetry(p => ({ ...p, distanceRemaining: Math.floor(dist) }))
+    toast.success("Target Locked. Drone Reset to Base.")
   }
 
   const handleDeploy = () => {
-    setStatus('DEPLOYING')
-    toast("ENGAGING ROTORS...", { icon: '🚀' })
-    let p = 0
-    // 🟢 FASTER DEPLOYMENT: 15ms interval (approx 1.5 seconds total)
-    const interval = setInterval(() => {
-      p += 1
-      setProgress(p)
-      if (p >= 100) {
-        clearInterval(interval)
-        setStatus('ACTIVE')
-        toast.success("Drone Airborne & En Route", { duration: 3000 })
-      }
-    }, 15)
+    if (!isLocked) return toast.error("Lock Target First")
+    
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
+
+    setStatus('AUTOPILOT')
+    setCameraFollow(true)
+    toast.success("Taking Off...")
+    
+    const start = [parseFloat(baseLng), parseFloat(baseLat)]
+    const end = [parseFloat(targetLng), parseFloat(targetLat)]
+    const totalDist = getDistance(start[1], start[0], end[1], end[0])
+    
+    dronePosRef.current = start
+    updateDroneMarker(start)
+
+    const startTime = Date.now()
+    const duration = 20000 
+    
+    const animate = () => {
+        const now = Date.now()
+        const elapsed = now - startTime
+        const t = Math.min(elapsed / duration, 1)
+
+        const lng = start[0] * (1 - t) + end[0] * t
+        const lat = start[1] * (1 - t) + end[1] * t
+        const currentPos = [lng, lat]
+        
+        dronePosRef.current = currentPos
+        updateDroneMarker(currentPos)
+
+        const currentDist = getDistance(lat, lng, end[1], end[0])
+        let currentSpeed = 0
+        if (t < 1) {
+             const baseSpeed = (totalDist / (duration / 1000)) * 3.6
+             currentSpeed = baseSpeed + (Math.random() * 5 - 2.5) 
+        }
+        
+        setTelemetry({
+            alt: 120 + Math.sin(t * 20) * 2,
+            speed: Math.max(0, Math.floor(currentSpeed)),
+            battery: Math.max(0, 88 - Math.floor(t * 10)),
+            satellites: 14 + Math.floor(Math.random() * 2),
+            signal: 90 - Math.floor(t * 5) + Math.floor(Math.random() * 4),
+            distanceRemaining: Math.floor(currentDist)
+        })
+
+        if (cameraFollow && mapRef.current) {
+            mapRef.current.easeTo({ center: currentPos, duration: 0 })
+        }
+
+        if (t < 1) {
+            animationFrameRef.current = requestAnimationFrame(animate)
+        } else {
+            setStatus('ARRIVED')
+            setTelemetry(prev => ({ ...prev, speed: 0 }))
+            toast.success("Mission Complete. Target Reached.")
+        }
+    }
+    animate()
   }
 
-  const handleStop = () => {
-    setStatus('STANDBY')
-    setProgress(0)
-    toast("Returning to Base", { icon: '🏠' })
-  }
-
-  const handleManualUpdate = () => {
-    setActiveTarget({ lat: parseFloat(manualLat), lon: parseFloat(manualLon) })
-    toast.success("Manual Coordinates Locked")
-  }
-
-  const handleEmergencyCall = () => {
-      window.location.href = 'tel:+917060321453'
-      toast.error("Emergency Services Contacted", { duration: 4000 })
+  const handleAbort = () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
+      setStatus('MANUAL')
+      setTelemetry(prev => ({ ...prev, speed: 0 }))
+      toast("Autopilot Aborted")
   }
 
   return (
-    <div className="min-h-screen md:h-screen md:max-h-screen w-full overflow-x-hidden bg-slate-50 dark:bg-black text-slate-900 dark:text-white font-mono relative transition-colors duration-300 flex flex-col md:overflow-hidden overflow-y-auto">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] bg-slate-950 text-white overflow-hidden relative">
       
-      <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
+      <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden absolute top-4 left-4 z-50 bg-slate-900/90 border border-white/20 p-2 rounded text-white shadow-lg">
+        {isSidebarOpen ? <X size={24}/> : <Menu size={24}/>}
+      </button>
 
-      <div className="absolute inset-0 z-0 opacity-10 dark:opacity-20 pointer-events-none" 
-           style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-      </div>
+      <DroneSidebar 
+         isSidebarOpen={isSidebarOpen} setSidebarOpen={setSidebarOpen}
+         status={status} telemetry={telemetry} isLocked={isLocked}
+         baseLat={baseLat} setBaseLat={setBaseLat} baseLng={baseLng} setBaseLng={setBaseLng}
+         targetLat={targetLat} setTargetLat={setTargetLat} targetLng={targetLng} setTargetLng={setTargetLng}
+         setFromMap={setFromMap} handlePaste={handlePaste} 
+         handleLockTarget={handleLockTarget} handleDeploy={handleDeploy} handleAbort={handleAbort}
+      />
 
-      {/* TOP BAR */}
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-center p-4 md:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-300 dark:border-white/10 gap-4 shrink-0 w-full">
-        <div className="w-full md:w-auto flex justify-between md:justify-start items-center">
-            <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 hover:text-red-600 dark:hover:text-red-500 transition font-bold text-sm md:text-base">
-              <ChevronLeft size={18} /> ABORT MISSION
-            </button>
-        </div>
+      <div className="flex-1 relative bg-black w-full h-full">
+        <div ref={mapContainerRef} className="absolute inset-0 w-full h-full outline-none" />
 
-        <div className="text-center">
-          <h1 className="text-xl md:text-2xl font-black text-red-600 dark:text-red-500 tracking-[0.2em] animate-pulse">TACTICAL COMMAND</h1>
-          <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase mt-1">
-              Destination Locked: <span className="text-slate-900 dark:text-white font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-white/10 shadow-sm">{activeTarget.lat.toFixed(4)}° N, {activeTarget.lon.toFixed(4)}° E</span>
-          </p>
-        </div>
+        <button 
+           onClick={() => setCameraFollow(!cameraFollow)}
+           className={`absolute top-4 right-4 z-10 px-3 py-2 rounded font-bold text-xs uppercase tracking-wider flex items-center gap-2 border shadow-lg ${cameraFollow ? 'bg-blue-600 text-white border-blue-400' : 'bg-black/80 text-slate-400 border-white/20'}`}
+        >
+            <Locate size={14} /> {cameraFollow ? 'Cam: Locked' : 'Cam: Free'}
+        </button>
 
-        <div className="hidden md:flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${status === 'STANDBY' ? 'bg-yellow-500' : 'bg-green-500 animate-ping'}`}></div>
-          <span className="font-bold">{status}</span>
-        </div>
-      </div>
+        {status === 'AUTOPILOT' && (
+             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur border border-blue-500/30 text-blue-400 px-4 py-1 rounded font-mono text-xs uppercase tracking-widest animate-pulse pointer-events-none z-10">
+                 AUTOPILOT ENGAGED
+             </div>
+        )}
 
-      {/* MAIN CONTENT */}
-      <div className="relative z-10 w-full max-w-[1600px] mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 md:h-full md:overflow-hidden">
-        
-        {/* LEFT: REAL DATA FEED */}
-        <div className="lg:col-span-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-3xl border border-slate-200 dark:border-white/10 p-4 flex flex-col shadow-lg h-[400px] md:h-full md:max-h-[80vh]">
-            
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200 dark:border-white/10 shrink-0">
-              <Signal size={18} className={loadingTargets ? "text-yellow-500 animate-pulse" : "text-green-500"}/>
-              <div>
-                 <h3 className="font-bold text-sm uppercase">Live Satellite Feed</h3>
-                 <p className="text-[9px] text-slate-400">LAST SCAN: {lastUpdated.toLocaleTimeString()}</p>
-              </div>
-              
-              <button 
-                onClick={fetchTargets} 
-                className="ml-auto p-1.5 bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-red-500 hover:text-white transition-colors"
-                title="Refresh Satellite Data"
-              >
-                <RefreshCw size={14} className={loadingTargets ? "animate-spin" : ""} />
-              </button>
-            </div>
-
-            {isSimulated && (
-                <div className="mb-2 shrink-0 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-[10px] font-bold uppercase p-2 rounded flex items-center justify-center gap-2">
-                    <Radio size={12} className="animate-pulse"/> Simulation Mode Active
-                </div>
-            )}
-
-            {/* TARGET LIST */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-              {allTargets.length > 0 ? allTargets.map((target, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => status === 'STANDBY' && setActiveTarget(target)}
-                    disabled={status !== 'STANDBY'}
-                    className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group relative overflow-hidden ${
-                      activeTarget.lat === target.lat 
-                      ? 'bg-red-600 text-white border-red-600 shadow-lg' 
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/5 hover:border-red-400'
-                    }`}
-                  >
-                     <div className="flex justify-between items-center relative z-10">
-                        <div>
-                           <div className="flex items-center gap-2 mb-1">
-                              <Flame size={12} className={activeTarget.lat === target.lat ? "text-white" : "text-orange-500"} />
-                              <p className="text-xs font-black uppercase tracking-wider">
-                                 Zone {idx + 1}: {target.brightness.toFixed(0)}K
-                              </p>
-                           </div>
-                           <p className="text-[10px] font-mono opacity-80">{target.lat.toFixed(4)}, {target.lon.toFixed(4)}</p>
-                        </div>
-                        {activeTarget.lat === target.lat && <CheckCircle2 size={16} className="animate-bounce"/>}
-                     </div>
-                  </button>
-              )) : (
-                  <div className="text-center p-4 text-slate-400 text-xs border border-dashed border-slate-700 rounded-xl bg-slate-950/30">
-                    <RefreshCw size={24} className="mx-auto mb-2 animate-spin opacity-50"/>
-                    Acquiring Target Data...
-                  </div>
-              )}
-            </div>
-
-            {/* Manual Override */}
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10 shrink-0">
-              <h4 className="text-[10px] font-bold uppercase text-slate-500 mb-3 flex items-center gap-2"><LocateFixed size={12}/> Manual Coords</h4>
-              <div className="space-y-3">
-                 <div className="grid grid-cols-2 gap-2">
-                   <div><label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Lat</label><input type="number" value={manualLat} onChange={(e) => setManualLat(e.target.value)} className="w-full bg-slate-100 dark:bg-black border border-slate-200 dark:border-white/10 rounded-lg px-2 py-2 text-xs font-mono focus:border-red-500 focus:outline-none"/></div>
-                   <div><label className="text-[9px] font-bold text-slate-500 uppercase block mb-1">Lon</label><input type="number" value={manualLon} onChange={(e) => setManualLon(e.target.value)} className="w-full bg-slate-100 dark:bg-black border border-slate-200 dark:border-white/10 rounded-lg px-2 py-2 text-xs font-mono focus:border-red-500 focus:outline-none"/></div>
-                 </div>
-                 <button onClick={handleManualUpdate} className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2 rounded-lg text-xs font-black uppercase tracking-wider hover:opacity-90 transition-opacity" disabled={status !== 'STANDBY'}>Lock Coordinates</button>
-              </div>
-            </div>
-        </div>
-
-        {/* CENTER: VISUALIZER */}
-        <div className="lg:col-span-6 flex flex-col relative rounded-3xl bg-slate-100 dark:bg-black border-[4px] border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl h-[300px] md:h-full">
-          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: `radial-gradient(${status === 'ACTIVE' ? '#22c55e' : '#ef4444'} 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
-          
-          {status === 'ACTIVE' ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full relative bg-black">
-                <iframe className="w-full h-full object-cover pointer-events-none" src={YOUTUBE_EMBED_URL} title="Drone Feed" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                <div className="absolute top-4 left-4 flex gap-2"><span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded animate-pulse flex items-center gap-1"><Video size={12}/> REC</span></div>
-                <div className="absolute top-4 right-4"><button onClick={handleStop} className="bg-slate-900/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-xs backdrop-blur border border-white/20 flex items-center gap-2 transition-all shadow-lg"><Square size={12} fill="currentColor" /> RETURN TO BASE</button></div>
-              </motion.div>
-          ) : (
-              <div className="flex-1 flex flex-col items-center justify-center relative z-10">
-                {/* 🟢 FAST CROSSHAIR: Spins at 5s per revolution (High Speed) */}
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                  className={`w-[200px] h-[200px] md:w-[250px] md:h-[250px] border border-current rounded-full flex items-center justify-center relative ${status === 'ACTIVE' ? 'text-green-500' : 'text-red-500'}`}
-                >
-                    <div className="absolute inset-0 border-t-2 border-current rounded-full opacity-50"></div>
-                    <div className="absolute inset-4 border-b-2 border-current rounded-full opacity-30"></div>
-                    <Crosshair size={32} className="opacity-80"/>
-                </motion.div>
-
-                {/* 🟢 SUPERSONIC PLANE: 1.5s Deployment with Overshoot */}
-                <motion.div 
-                  className="absolute" 
-                  initial={{ scale: 1, y: 0 }} 
-                  animate={status === 'DEPLOYING' ? { 
-                      scale: [1, 0.9, 60], // Pull back slightly then MASSIVE ZOOM
-                      opacity: [1, 1, 0], 
-                      rotate: [0, -2, 0],
-                      y: [0, 10, -800] // Pull down slightly then LAUNCH
-                  } : { 
-                      y: [0, -10, 0] 
-                  }} 
-                  // Use 'backIn' easing for that "snap" effect
-                  transition={status === 'DEPLOYING' ? { duration: 1.5, ease: "backIn" } : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                >
-                    <Plane size={80} className={`transition-colors duration-500 drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] ${status === 'ACTIVE' ? 'text-green-500' : 'text-slate-800 dark:text-white'}`} />
-                </motion.div>
-
-                <div className="absolute bottom-10 w-full px-10 text-center">
-                    {status === 'STANDBY' ? (
-                      // 🟢 JUMPING BUTTON
-                      <motion.button 
-                        onClick={handleDeploy}
-                        animate={{
-                          y: [0, -4, 0],
-                          boxShadow: [
-                            "0 0 0px rgba(220,38,38,0.2)",
-                            "0 10px 25px rgba(220,38,38,0.5)",
-                            "0 0 0px rgba(220,38,38,0.2)"
-                          ]
-                        }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-full bg-red-600 hover:bg-red-700 text-white py-4 md:py-5 rounded-2xl font-black text-lg md:text-xl tracking-[0.2em] border border-red-500"
-                      >
-                        DEPLOY TO SECTOR
-                      </motion.button>
-                    ) : (
-                      <div className="bg-black/80 backdrop-blur text-green-500 py-4 rounded-xl border border-green-500/30">
-                          <p className="text-xs font-bold uppercase tracking-widest mb-2">Systems Engaging...</p>
-                          <div className="w-64 h-2 bg-slate-800 rounded-full mx-auto overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-green-500"/></div>
-                      </div>
-                    )}
-                </div>
-              </div>
-          )}
-        </div>
-
-        {/* RIGHT: MINI-MAP */}
-        <div className="lg:col-span-3 flex flex-col gap-4 h-[300px] md:h-full">
-            <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 overflow-hidden relative shadow-lg">
-              <div className="absolute top-0 left-0 right-0 z-10 bg-slate-900/90 backdrop-blur p-3 flex justify-between items-center border-b border-white/10">
-                 <div className="flex items-center gap-2"><MapIcon size={14} className="text-blue-400"/><span className="text-[10px] font-bold text-white uppercase tracking-wider">Target Vector</span></div>
-                 <span className="text-[9px] font-mono text-green-400">SAT-LINK: ACTIVE</span>
-              </div>
-              <div className="w-full h-full bg-slate-800 relative">
-                 {mapLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-500 gap-2"><RefreshCw className="animate-spin" size={20}/> Loading Map...</div>
-                 ) : mapHtml ? (
-                    <iframe srcDoc={mapHtml} className="w-full h-full border-none opacity-80 hover:opacity-100 transition-opacity" title="Mini Map" />
-                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-600 text-xs">Map Offline</div>
-                 )}
-                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div className="w-32 h-32 border-2 border-dashed border-red-500/30 rounded-full animate-pulse flex items-center justify-center">
-                       <Navigation size={24} className="text-red-500 rotate-45 drop-shadow-lg" fill="currentColor"/>
-                    </div>
-                 </div>
-              </div>
-            </div>
-
-            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/30 p-6 rounded-3xl text-center shadow-lg shrink-0">
-              <AlertTriangle size={32} className="mx-auto text-red-600 dark:text-red-500 mb-2 animate-pulse" />
-              <h3 className="font-bold text-red-700 dark:text-red-400 mb-4">Command Override</h3>
-              <button onClick={handleEmergencyCall} className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-red-500/30 transition-all animate-bounce"><PhoneCall size={18} /> CALL FIRE DEPT</button>
-            </div>
-        </div>
-
+        <VirtualJoysticks 
+            manualMoveDrone={manualMoveDrone} 
+            manualRotate={manualRotate} 
+            manualZoom={manualZoom} 
+            status={status} 
+        />
       </div>
     </div>
   )
 }
+
+export default DroneController
