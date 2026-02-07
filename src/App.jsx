@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Routes, Route, useLocation, Navigate, useNavigate, Outlet } from 'react-router-dom' 
+import { Routes, Route, useLocation, Navigate, useNavigate, Outlet } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { ThemeProvider } from './context/ThemeContext'
 import { Toaster } from 'react-hot-toast'
 import { supabase } from './Supabase/supabase'
 import { Loader2 } from 'lucide-react'
-
 
 import Navbar from './components/Navbar'
 import AuthScreen from './components/AuthScreen'
@@ -16,26 +15,22 @@ import AccountPage from './components/AccountPage'
 import ReportFire from './components/ReportFire'
 import AdminGate from './components/AdminGate'
 
-
 import LandingPage from './components/Landing/LandingPage'
 import AboutUs from './components/Landing/AboutUs'
 import ComplaintRegistry from './components/Landing/ComplaintRegistry'
 
-
 import Complaints from './components/dashboard/Complaints'
 import Inbox from './components/dashboard/Inbox'
-
 
 const ProtectedRoute = ({ user, children }) => {
   if (!user) return <Navigate to="/auth" replace />
   return children
 }
 
-
 const AdminLayout = () => {
   return (
     <AdminGate>
-       <Outlet /> 
+       <Outlet />
     </AdminGate>
   )
 }
@@ -44,13 +39,11 @@ function App() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('firewatch_user')
     return saved ? JSON.parse(saved) : null
   })
 
-  
   const [isAuthChecking, setIsAuthChecking] = useState(true)
 
   useEffect(() => {
@@ -70,7 +63,7 @@ function App() {
       if (event === 'SIGNED_OUT') {
         setUser(null)
         localStorage.removeItem('firewatch_user')
-        sessionStorage.clear()
+        sessionStorage.removeItem('firewatch_admin_verified')
         navigate('/', { replace: true })
       } 
       else if (session?.user) {
@@ -92,13 +85,13 @@ function App() {
     try {
       await supabase.auth.signOut()
       localStorage.removeItem('firewatch_user')
-      sessionStorage.clear()
+      sessionStorage.removeItem('firewatch_admin_verified')
       setUser(null)
       navigate('/')
     } catch (error) {
       console.error("Logout Error:", error)
-      localStorage.clear()
-      sessionStorage.clear()
+      localStorage.removeItem('firewatch_user')
+      sessionStorage.removeItem('firewatch_admin_verified')
       window.location.href = '/'
     }
   }
@@ -127,14 +120,14 @@ function App() {
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             
-            
             <Route path="/" element={<LandingPage user={user} onLogout={handleLogout} />} />
+            
             <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthScreen />} />
+            
             <Route path="/about" element={<AboutUs isStandalone={true} />} />
             <Route path="/registry" element={<ComplaintRegistry isStandalone={true} />} />
             <Route path="/report" element={<ReportFire />} />
 
-           
             <Route element={
                 <ProtectedRoute user={user}>
                     <AdminLayout />
@@ -148,7 +141,6 @@ function App() {
                 <Route path="/inbox" element={<Inbox />} />
             </Route>
 
-            {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>
