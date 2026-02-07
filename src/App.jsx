@@ -52,6 +52,10 @@ function App() {
         const newUser = { ...session.user, role: 'operator' }
         setUser(newUser)
         localStorage.setItem('firewatch_user', JSON.stringify(newUser))
+        // If user landed on /auth with a valid session (e.g. from OAuth callback), redirect
+        if (location.pathname === '/auth') {
+          navigate('/dashboard', { replace: true })
+        }
       } else {
         localStorage.removeItem('firewatch_user')
         setUser(null)
@@ -71,7 +75,8 @@ function App() {
         setUser(newUser)
         localStorage.setItem('firewatch_user', JSON.stringify(newUser))
         
-        if (location.pathname === '/auth') {
+        const publicPaths = ['/', '/auth', '/about', '/registry', '/report']
+        if (event === 'SIGNED_IN' || publicPaths.includes(location.pathname)) {
            navigate('/dashboard', { replace: true })
         }
       }

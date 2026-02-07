@@ -19,7 +19,7 @@ export default function AuthScreen({ onLogin }) {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin }
+        options: { redirectTo: `${window.location.origin}/auth` }
       })
       if (error) throw error
     } catch (error) {
@@ -58,7 +58,7 @@ export default function AuthScreen({ onLogin }) {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: window.location.origin }
+        options: { emailRedirectTo: `${window.location.origin}/auth` }
       })
       if (error) throw error
       
