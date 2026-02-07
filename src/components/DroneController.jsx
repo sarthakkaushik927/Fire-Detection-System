@@ -3,20 +3,29 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Menu, X, Locate } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useLocation } from 'react-router-dom'
 
+// 🟢 IMPORTS
 import { getDistance, calculateNewPos } from '../utils/geoUtils'
 import DroneSidebar from './drone/DroneSidebar'
 import VirtualJoysticks from './drone/VirtualJoysticks'
 
+// Disable telemetry to stop console errors
 mapboxgl.config.telemetry = false
 
 const DroneController = () => {
+  const location = useLocation()
+
+  // --- STATE ---
   const [telemetry, setTelemetry] = useState({
     alt: 120, speed: 0, battery: 88, satellites: 14, signal: 92, distanceRemaining: 0
   })
 
+  // Default Base Location
   const [baseLat, setBaseLat] = useState('35.1691')
   const [baseLng, setBaseLng] = useState('138.7189')
+  
+  // Target Location
   const [targetLat, setTargetLat] = useState('35.3397')
   const [targetLng, setTargetLng] = useState('138.7265')
   
@@ -30,6 +39,66 @@ const DroneController = () => {
   const animationFrameRef = useRef(null)
   const dronePosRef = useRef([138.7189, 35.1691])
 
+  // 🟢 1. DEFINE LOCK LOGIC (This was missing in your code)
+  const performLock = (tLat, tLng) => {
+    if (!mapRef.current) return
+
+    setIsLocked(true)
+    setStatus('LOCKED')
+    
+    // Teleport Drone back to Base to start mission
+    const start = [parseFloat(baseLng), parseFloat(baseLat)]
+    dronePosRef.current = start
+    updateDroneMarker(start)
+    
+    // Move Camera
+    mapRef.current.flyTo({ center: start, zoom: 14, pitch: 70 })
+
+    // Draw Route Line
+    const end = [parseFloat(tLng), parseFloat(tLat)]
+    const route = { type: 'Feature', geometry: { type: 'LineString', coordinates: [start, end] } }
+
+    if (mapRef.current.getSource('mission-route')) {
+        mapRef.current.getSource('mission-route').setData(route)
+    } else {
+        if (mapRef.current.getLayer('mission-route')) mapRef.current.removeLayer('mission-route')
+        if (mapRef.current.getSource('mission-route')) mapRef.current.removeSource('mission-route')
+
+        mapRef.current.addSource('mission-route', { type: 'geojson', data: route })
+        mapRef.current.addLayer({
+            id: 'mission-route', source: 'mission-route', type: 'line',
+            paint: { 'line-color': '#3b82f6', 'line-width': 4, 'line-opacity': 0.8 }
+        })
+    }
+    
+    // Update Stats
+    const dist = getDistance(start[1], start[0], end[1], end[0])
+    setTelemetry(p => ({ ...p, distanceRemaining: Math.floor(dist) }))
+  }
+
+  // 🟢 2. AUTO-LOCK ON REDIRECT
+  useEffect(() => {
+    if (location.state?.lat && location.state?.lon) {
+        const { lat, lon } = location.state
+        
+        setTargetLat(lat)
+        setTargetLng(lon)
+        
+        // Wait for map to load before locking
+        const checkMap = setInterval(() => {
+            if (mapRef.current && mapRef.current.isStyleLoaded()) {
+                performLock(lat, lon)
+                toast.success(`Target Coordinates Received`)
+                clearInterval(checkMap)
+            }
+        }, 500)
+        
+        // Cleanup timeout if component unmounts
+        return () => clearInterval(checkMap)
+    }
+  }, [location])
+
+  // --- MAP SETUP ---
   useEffect(() => {
     mapboxgl.accessToken = 'pk.eyJ1IjoiYW51dXUxMTExMTExMSIsImEiOiJjbWxiend6dGUwcWlpM2ZzOTBseWZjenpqIn0.UmHLNCHiLOb8XLa0JvMmJQ'
 
@@ -80,42 +149,14 @@ const DroneController = () => {
     }
   }, [])
 
-  const teleportDrone = (lat, lng) => {
-    const newPos = [parseFloat(lng), parseFloat(lat)]
-    dronePosRef.current = newPos
-    updateDroneMarker(newPos)
-    if (mapRef.current) {
-        mapRef.current.flyTo({ center: newPos })
-    }
-  }
-
-  const handlePaste = async (type) => {
-    try {
-      const text = await navigator.clipboard.readText()
-      if (!text) return toast.error("Clipboard empty")
-      const parts = text.split(/[\s,]+/)
-      let lat, lng
-
-      if (parts.length >= 2) {
-        lat = parseFloat(parts[0])
-        lng = parseFloat(parts[1])
-      } else {
-         return toast.error("Format: 'lat, lng'")
-      }
-
-      if (!isNaN(lat) && !isNaN(lng)) {
-        if (type === 'TARGET') {
-          setTargetLat(lat); setTargetLng(lng)
-        } else {
-          setBaseLat(lat); setBaseLng(lng)
-          teleportDrone(lat, lng)
-        }
-        toast.success("Coordinates Pasted")
-      } else {
-        toast.error("Invalid numbers")
-      }
-    } catch (err) {
-      toast.error("Allow clipboard permissions")
+  // Helpers
+  const updateDroneMarker = (coords) => {
+    const map = mapRef.current
+    if (map && map.getSource('drone-point')) {
+        map.getSource('drone-point').setData({
+            type: 'FeatureCollection',
+            features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: coords } }]
+        })
     }
   }
 
@@ -132,13 +173,39 @@ const DroneController = () => {
      }
   }
 
-  const updateDroneMarker = (coords) => {
-    const map = mapRef.current
-    if (map && map.getSource('drone-point')) {
-        map.getSource('drone-point').setData({
-            type: 'FeatureCollection',
-            features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: coords } }]
-        })
+  const teleportDrone = (lat, lng) => {
+    const newPos = [parseFloat(lng), parseFloat(lat)]
+    dronePosRef.current = newPos
+    updateDroneMarker(newPos)
+    if (mapRef.current) {
+        mapRef.current.flyTo({ center: newPos })
+    }
+  }
+
+  const handlePaste = async (type) => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text) return toast.error("Clipboard empty")
+      const parts = text.split(/[\s,]+/)
+      let lat, lng
+      if (parts.length >= 2) {
+        lat = parseFloat(parts[0]); lng = parseFloat(parts[1])
+      } else {
+         return toast.error("Format: 'lat, lng'")
+      }
+      if (!isNaN(lat) && !isNaN(lng)) {
+        if (type === 'TARGET') {
+          setTargetLat(lat); setTargetLng(lng)
+        } else {
+          setBaseLat(lat); setBaseLng(lng)
+          teleportDrone(lat, lng)
+        }
+        toast.success("Coordinates Pasted")
+      } else {
+        toast.error("Invalid numbers")
+      }
+    } catch (err) {
+      toast.error("Allow clipboard permissions")
     }
   }
 
@@ -148,10 +215,8 @@ const DroneController = () => {
     const key = e.key.toLowerCase()
 
     if (['arrowup','arrowdown','arrowleft','arrowright'].includes(key)) {
-        setCameraFollow(false)
-        return 
+        setCameraFollow(false); return 
     }
-
     if (key === 'r') map.zoomIn()
     if (key === 'f') map.zoomOut()
     if (key === 'q') map.easeTo({ bearing: map.getBearing() - 5 })
@@ -160,26 +225,17 @@ const DroneController = () => {
     if (status !== 'AUTOPILOT') {
         const bearing = map.getBearing()
         let angle = null
-        
-        if (key === 'w') angle = 0   
-        if (key === 's') angle = 180 
-        if (key === 'a') angle = 270 
-        if (key === 'd') angle = 90  
-
-        if (angle !== null) {
-            e.preventDefault() 
-            moveDroneByBearing(angle + bearing)
-        }
+        if (key === 'w') angle = 0; if (key === 's') angle = 180 
+        if (key === 'a') angle = 270; if (key === 'd') angle = 90  
+        if (angle !== null) { e.preventDefault(); moveDroneByBearing(angle + bearing) }
     }
   }
 
   const moveDroneByBearing = (bearing) => {
       const [lng, lat] = dronePosRef.current
       const newPos = calculateNewPos(lat, lng, bearing, 30) 
-      
       dronePosRef.current = newPos
       updateDroneMarker(newPos)
-      
       if (cameraFollow && mapRef.current) {
           mapRef.current.easeTo({ center: newPos, duration: 100 })
       }
@@ -196,57 +252,36 @@ const DroneController = () => {
 
   const handleLockTarget = () => {
     if (!targetLat || !targetLng) return toast.error("Invalid Target")
-    setIsLocked(true)
-    setStatus('LOCKED')
-    
-    teleportDrone(baseLat, baseLng)
-    setCameraFollow(true)
-
-    const map = mapRef.current
-    const start = [parseFloat(baseLng), parseFloat(baseLat)]
-    const end = [parseFloat(targetLng), parseFloat(targetLat)]
-    
-    const route = { type: 'Feature', geometry: { type: 'LineString', coordinates: [start, end] } }
-
-    if (map.getSource('mission-route')) {
-      map.getSource('mission-route').setData(route)
-    } else {
-      map.addSource('mission-route', { type: 'geojson', data: route })
-      map.addLayer({
-        id: 'mission-route', source: 'mission-route', type: 'line',
-        paint: { 'line-color': '#3b82f6', 'line-width': 4, 'line-opacity': 0.8 }
-      })
-    }
-    
-    const dist = getDistance(start[1], start[0], end[1], end[0])
-    setTelemetry(p => ({ ...p, distanceRemaining: Math.floor(dist) }))
-    toast.success("Target Locked. Drone Reset to Base.")
+    performLock(targetLat, targetLng)
+    toast.success("Target Locked.")
   }
 
+  // 🟢 3. DEPLOY LOGIC (AUTOPILOT)
   const handleDeploy = () => {
     if (!isLocked) return toast.error("Lock Target First")
     
+    // Ensure coordinates are numbers
+    const start = dronePosRef.current
+    const end = [parseFloat(targetLng), parseFloat(targetLat)]
+
+    if (isNaN(end[0]) || isNaN(end[1])) return toast.error("Invalid Coordinates")
+
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
 
     setStatus('AUTOPILOT')
     setCameraFollow(true)
     toast.success("Taking Off...")
     
-    const start = [parseFloat(baseLng), parseFloat(baseLat)]
-    const end = [parseFloat(targetLng), parseFloat(targetLat)]
     const totalDist = getDistance(start[1], start[0], end[1], end[0])
-    
-    dronePosRef.current = start
-    updateDroneMarker(start)
-
     const startTime = Date.now()
-    const duration = 20000 
+    const duration = 20000 // 20 seconds flight time
     
     const animate = () => {
         const now = Date.now()
         const elapsed = now - startTime
         const t = Math.min(elapsed / duration, 1)
 
+        // Interpolate position
         const lng = start[0] * (1 - t) + end[0] * t
         const lat = start[1] * (1 - t) + end[1] * t
         const currentPos = [lng, lat]
@@ -279,7 +314,7 @@ const DroneController = () => {
         } else {
             setStatus('ARRIVED')
             setTelemetry(prev => ({ ...prev, speed: 0 }))
-            toast.success("Mission Complete. Target Reached.")
+            toast.success("Target Reached")
         }
     }
     animate()
@@ -294,7 +329,6 @@ const DroneController = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] bg-slate-950 text-white overflow-hidden relative">
-      
       <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="md:hidden absolute top-4 left-4 z-50 bg-slate-900/90 border border-white/20 p-2 rounded text-white shadow-lg">
         {isSidebarOpen ? <X size={24}/> : <Menu size={24}/>}
       </button>
@@ -305,7 +339,8 @@ const DroneController = () => {
          baseLat={baseLat} setBaseLat={setBaseLat} baseLng={baseLng} setBaseLng={setBaseLng}
          targetLat={targetLat} setTargetLat={setTargetLat} targetLng={targetLng} setTargetLng={setTargetLng}
          setFromMap={setFromMap} handlePaste={handlePaste} 
-         handleLockTarget={handleLockTarget} handleDeploy={handleDeploy} handleAbort={handleAbort}
+         handleLockTarget={handleLockTarget} 
+         handleDeploy={handleDeploy} handleAbort={handleAbort}
       />
 
       <div className="flex-1 relative bg-black w-full h-full">

@@ -13,13 +13,12 @@ import Chatbot from './Chatbot'
 // Backend Config
 const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
 
-// 🟢 NEW: Helper to create cool names like "ALPHA-9" from coords
+// Helper to create cool names like "ALPHA-9"
 const generateSectorName = (lat, lon) => {
   const zones = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'ZULU', 'OMEGA', 'TITAN', 'NOVA'];
-  // Use coordinates to pick a stable name (so it doesn't change on refresh)
   const index = Math.floor((Math.abs(lat) + Math.abs(lon)) * 100) % zones.length;
   const subSector = Math.floor((Math.abs(lat - lon) * 1000) % 99) + 1;
-  return `${zones[index]}-${subSector}`; // e.g., "BRAVO-42"
+  return `${zones[index]}-${subSector}`;
 }
 
 export default function Navbar({ user, onLogout }) {
@@ -49,22 +48,25 @@ export default function Navbar({ user, onLogout }) {
         })
         const result = await res.json()
 
+        // 🟢 ROBUST PARSING (Same as Dashboard)
+        let parsedData = typeof result.data === 'string' ? JSON.parse(result.data) : result.data
+        
         let rows = []
-        if (Array.isArray(result.data)) {
-           rows = result.data
-        } else if (typeof result.data === 'string') {
-            try { 
-                const parsed = JSON.parse(result.data);
-                if (Array.isArray(parsed)) rows = parsed;
-            } catch (e) {}
+        if (parsedData && parsedData.latitude) {
+             rows = Object.keys(parsedData.latitude).map(key => ({
+                latitude: parsedData.latitude[key],
+                longitude: parsedData.longitude?.[key] || 0,
+                brightness: parsedData.brightness?.[key] || 300
+             }))
+        } else if (Array.isArray(result.data)) {
+             rows = result.data
         }
 
-        // 🟢 FIX: Use generateSectorName for cool names instead of "28.12"
         highRisk = rows.map(item => ({
             id: `${item.latitude}-${item.longitude}`,
             lat: Number(item.latitude),
             lon: Number(item.longitude),
-            temp: Number(item.brightness) || 300,
+            temp: Number(item.brightness),
             message: `HIGH HEAT: SECTOR ${generateSectorName(Number(item.latitude), Number(item.longitude))}`
         }))
 
@@ -74,7 +76,7 @@ export default function Navbar({ user, onLogout }) {
             setIsSimulated(false)
             setNotifications(highRisk.slice(0, 10))
         } else {
-            throw new Error("No active fires found")
+            setNotifications([]) // No fires found
         }
 
       } catch (e) {
@@ -83,8 +85,6 @@ export default function Navbar({ user, onLogout }) {
         setNotifications([
           { id: 'sim-1', lat: 28.6139, lon: 77.2090, temp: 350, message: 'CRITICAL: SECTOR ALPHA-1' },
           { id: 'sim-2', lat: 26.8467, lon: 80.9462, temp: 342, message: 'HIGH HEAT: ZONE BETA-7' },
-          { id: 'sim-3', lat: 25.3176, lon: 82.9739, temp: 338, message: 'WARNING: SECTOR GAMMA-9' },
-          { id: 'sim-4', lat: 27.1767, lon: 78.0081, temp: 335, message: 'CAUTION: ZONE DELTA-4' },
         ])
       } finally {
         setLoading(false)
@@ -95,6 +95,12 @@ export default function Navbar({ user, onLogout }) {
     const interval = setInterval(fetchAlerts, 60000) 
     return () => clearInterval(interval)
   }, [])
+
+  const handleNotificationClick = (lat, lon) => {
+      // 🟢 FIX: Send flat structure so DroneController detects it
+      navigate('/drone-control', { state: { lat, lon } })
+      setShowNotifs(false)
+  }
 
   const navLinks = [
     { name: 'Command', path: '/dashboard', icon: LayoutDashboard },
@@ -184,7 +190,11 @@ export default function Navbar({ user, onLogout }) {
                            </div>
                         ) : notifications.length > 0 ? (
                           notifications.map(n => (
-                            <div key={n.id} onClick={() => { navigate('/drone-control', { state: { target: { lat: n.lat, lon: n.lon } } }); setShowNotifs(false); }} className="p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-500/20 rounded-xl cursor-pointer hover:border-red-500 transition-colors group">
+                            <div 
+                                key={n.id} 
+                                onClick={() => handleNotificationClick(n.lat, n.lon)} 
+                                className="p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-500/20 rounded-xl cursor-pointer hover:border-red-500 transition-colors group"
+                            >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <p className="text-[10px] font-black text-red-700 dark:text-red-400 uppercase">{n.message}</p>
