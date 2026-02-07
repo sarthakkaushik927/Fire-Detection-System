@@ -10,13 +10,13 @@ export const useDroneStream = (url) => {
     ws.onopen = () => setIsConnected(true)
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      // Assuming your backend sends: { "image": "base64_string" }
+      
       setFrame(`data:image/jpeg;base64,${data.image}`)
     }
     ws.onclose = () => setIsConnected(false)
 
     return () => ws.close()
-  }, [url])
+  }, [url]) 
 
   return { frame, isConnected }
 }

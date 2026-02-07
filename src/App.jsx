@@ -14,6 +14,7 @@ import DownloadsPage from './components/DownloadsPage'
 import AccountPage from './components/AccountPage'
 import ReportFire from './components/ReportFire'
 import AdminGate from './components/AdminGate'
+import LiveStream from './components/LiveStream'
 
 import LandingPage from './components/Landing/LandingPage'
 import AboutUs from './components/Landing/AboutUs'
@@ -136,6 +137,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/complaints" element={<Complaints />} />
                 <Route path="/drone-control" element={<DroneController />} />
+                <Route path="/live-feed" element={<LiveStream />} />
                 <Route path="/downloads" element={<DownloadsPage />} />
                 <Route path="/account" element={<AccountPage user={user} />} />
                 <Route path="/inbox" element={<Inbox />} />

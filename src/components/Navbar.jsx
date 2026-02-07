@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Flame, LayoutDashboard, FileWarning, Plane,
   Download, User, LogOut, Sun, Moon, Menu, X,
-  Mail, Bell, ChevronRight, Loader2, ShieldAlert, MapPin, Radio
+  Mail, Bell, ChevronRight, Loader2, ShieldAlert, MapPin, Radio,Cctv
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
@@ -105,6 +105,7 @@ export default function Navbar({ user, onLogout }) {
   const navLinks = [
     { name: 'Command', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Incidents', path: '/complaints', icon: FileWarning },
+    { name: 'Live Feed', path: '/live-feed', icon: Cctv },
     { name: 'Drone', path: '/drone-control', icon: Plane },
     { name: 'Inbox', path: '/inbox', icon: Mail },
     { name: 'Resources', path: '/downloads', icon: Download },
