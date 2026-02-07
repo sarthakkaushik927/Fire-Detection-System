@@ -39,7 +39,7 @@ const DroneController = () => {
   const animationFrameRef = useRef(null)
   const dronePosRef = useRef([138.7189, 35.1691])
 
-  // 🟢 1. DEFINE LOCK LOGIC (This was missing in your code)
+  // --- LOCK LOGIC ---
   const performLock = (tLat, tLng) => {
     if (!mapRef.current) return
 
@@ -76,7 +76,7 @@ const DroneController = () => {
     setTelemetry(p => ({ ...p, distanceRemaining: Math.floor(dist) }))
   }
 
-  // 🟢 2. AUTO-LOCK ON REDIRECT
+  // --- AUTO-LOCK ON REDIRECT ---
   useEffect(() => {
     if (location.state?.lat && location.state?.lon) {
         const { lat, lon } = location.state
@@ -84,7 +84,6 @@ const DroneController = () => {
         setTargetLat(lat)
         setTargetLng(lon)
         
-        // Wait for map to load before locking
         const checkMap = setInterval(() => {
             if (mapRef.current && mapRef.current.isStyleLoaded()) {
                 performLock(lat, lon)
@@ -93,7 +92,6 @@ const DroneController = () => {
             }
         }, 500)
         
-        // Cleanup timeout if component unmounts
         return () => clearInterval(checkMap)
     }
   }, [location])
@@ -104,7 +102,8 @@ const DroneController = () => {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/standard-satellite',
+      // 🟢 CHANGED: Using satellite-streets to get labels we can filter
+      style: 'mapbox://styles/mapbox/satellite-streets-v12', 
       center: [parseFloat(baseLng), parseFloat(baseLat)],
       zoom: 14,
       pitch: 70,
@@ -116,6 +115,25 @@ const DroneController = () => {
     mapRef.current = map
 
     map.on('load', () => {
+      // 🟢 1. FILTER MAP ELEMENTS (Hide clutter, show emergency)
+      // Hide standard POIs unless they are critical
+      if (map.getLayer('poi-label')) {
+         map.setFilter('poi-label', [
+            'match',
+            ['get', 'class'], 
+            ['hospital', 'police', 'fire_station', 'medical'], // Only show these
+            true,
+            false // Hide everything else
+         ])
+      }
+      
+      // Hide commercial areas/transit to reduce noise
+      const layersToHide = ['transit-label', 'road-label-simple', 'waterway-label']
+      layersToHide.forEach(layer => {
+          if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', 'none')
+      })
+
+      // 🟢 2. ADD DRONE
       const pointData = {
         type: 'FeatureCollection',
         features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [parseFloat(baseLng), parseFloat(baseLat)] } }]
@@ -127,7 +145,7 @@ const DroneController = () => {
         source: 'drone-point',
         type: 'circle',
         paint: {
-          'circle-radius': 8,
+          'circle-radius': 10,
           'circle-color': '#ef4444',
           'circle-stroke-width': 2,
           'circle-stroke-color': '#ffffff',
@@ -256,11 +274,9 @@ const DroneController = () => {
     toast.success("Target Locked.")
   }
 
-  // 🟢 3. DEPLOY LOGIC (AUTOPILOT)
   const handleDeploy = () => {
     if (!isLocked) return toast.error("Lock Target First")
     
-    // Ensure coordinates are numbers
     const start = dronePosRef.current
     const end = [parseFloat(targetLng), parseFloat(targetLat)]
 
@@ -274,14 +290,13 @@ const DroneController = () => {
     
     const totalDist = getDistance(start[1], start[0], end[1], end[0])
     const startTime = Date.now()
-    const duration = 20000 // 20 seconds flight time
+    const duration = 20000 
     
     const animate = () => {
         const now = Date.now()
         const elapsed = now - startTime
         const t = Math.min(elapsed / duration, 1)
 
-        // Interpolate position
         const lng = start[0] * (1 - t) + end[0] * t
         const lat = start[1] * (1 - t) + end[1] * t
         const currentPos = [lng, lat]
