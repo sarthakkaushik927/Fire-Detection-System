@@ -13,7 +13,10 @@ export default function View() {
 
         const connect = () => {
             // 🟢 Native WebSocket Connection
-            ws = new WebSocket(`ws://13.51.249.146:8002/api/streamFireImage/ws_fire_image/${roomId}`);
+            // Auto-detect protocol: use wss:// for HTTPS pages, ws:// for HTTP
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//13.51.249.146:8002/api/streamFireImage/ws_fire_image/${roomId}`;
+            ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
                 if (!isMounted) return;
