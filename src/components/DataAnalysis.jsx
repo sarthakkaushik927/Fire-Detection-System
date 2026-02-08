@@ -3,14 +3,14 @@ import { motion } from 'framer-motion'
 import { Image, Loader2, RefreshCw, AlertTriangle, FileBarChart } from 'lucide-react'
 import { Toaster, toast } from 'react-hot-toast'
 
-// 🟢 CONFIG: The exact URL you provided
+
 const ANALYZER_API = "https://keryptonite-8k3u.vercel.app/api/fires/data_analyser"
 
 const DataAnalysis = () => {
     const [images, setImages] = useState([])
     const [loading, setLoading] = useState(true)
 
-    // 🟢 HELPER: Find and format Base64 strings
+  
     const extractImages = (data) => {
         let found = []
 
@@ -24,16 +24,14 @@ const DataAnalysis = () => {
                 Object.values(item).forEach(search)
             }
             else if (typeof item === 'string') {
-                // Logic to detect Base64 image data
-                // Trim whitespace to be safe
+               
                 const trimmed = item.trim();
-                // "iVBOR" is the standard starting signature for PNGs
-                // We use a shorter check to be more robust against minor variations
+               
                 if (trimmed.startsWith('iVBOR')) {
-                    // 🛠 FIX: Add the prefix so the browser treats it as an image
+                 
                     found.push(`data:image/png;base64,${trimmed}`)
                 }
-                // If the backend already added the prefix
+                
                 else if (trimmed.startsWith('data:image')) {
                     found.push(trimmed)
                 }
@@ -55,7 +53,7 @@ const DataAnalysis = () => {
 
             const result = await res.json()
 
-            // 🟢 Process the response
+            
             const imageList = extractImages(result)
 
             if (imageList.length === 0) {
@@ -90,13 +88,13 @@ const DataAnalysis = () => {
         >
             <Toaster position="bottom-right" toastOptions={{ style: { background: '#1e293b', color: '#fff' } }} />
 
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="max-w-screen mx-auto space-y-6">
 
-                {/* Header */}
+                
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white flex items-center gap-3">
-                            <FileBarChart className="text-orange-600" /> Visual Analytics
+                            <FileBarChart className="text-orange-600" /> Visual Analytics Of Last 3 Days
                         </h1>
                         <p className="text-xs font-mono font-bold text-slate-400">SOURCE: REMOTE ANALYZER</p>
                     </div>
@@ -132,7 +130,7 @@ const DataAnalysis = () => {
                                     <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                                         <Image size={20} className="text-orange-500" />
                                     </div>
-                                    <h3 className="text-sm font-black uppercase text-slate-500 tracking-wider">Metric Graph #{index + 1}</h3>
+                                    <h3 className="text-sm font-black uppercase text-slate-500 tracking-wider">Graph {index + 1}</h3>
                                 </div>
 
                                 {/* Image Container */}
