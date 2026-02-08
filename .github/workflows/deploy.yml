@@ -1,0 +1,44 @@
+name: Deploy React Simple EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: code checkout
+        uses: actions/checkout@v4
+
+      - name: node setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install deps
+        run: npm install
+
+      - name: build react
+        run: npm run build
+
+      - name: copy build to ec2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "build/*"
+          target: "~/app"
+
+      - name: restart app on ec2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            pkill -f serve || true
+            nohup serve -s app -l 3000 > log.txt 2>&1 &

@@ -11,7 +11,7 @@ import WeatherWidget from './dashboard/WeatherWidget'
 import ControlBar from './dashboard/ControlBar'
 import MapViewer from './dashboard/MapViewer'
 import HighRiskRegions from './dashboard/HighRiskRegions' 
-import LiveStreamQR from './dashboard/LiveStreamQR'
+
 
 export default function Dashboard() {
   const [selectedCountry, setSelectedCountry] = useState("india")
@@ -179,10 +179,10 @@ export default function Dashboard() {
       {/* 🟢 LEFT SIDE (Desktop): WEATHER + RISK LIST */}
       <section className="lg:col-span-4 flex flex-col gap-6 h-auto lg:h-full order-2 lg:overflow-hidden">
         <motion.div variants={itemVariants} className="shrink-0">
-            <LiveStreamQR/>
-
+            
+            <WeatherWidget />
         </motion.div>
-        <WeatherWidget />
+        
         {/* Flex container ensures scrollbar appears only on this list */}
         <motion.div variants={itemVariants} className="flex-1 flex flex-col min-h-[400px] lg:min-h-0 lg:overflow-hidden">
             <HighRiskRegions 
