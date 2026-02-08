@@ -65,7 +65,7 @@ export default function LandingNavbar({ navigate, textEnter, textLeave, user, on
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             <div className="relative">
-                <img src="/public/Group803.png" alt="" className="text-red-500 group-hover:text-orange-500 transition-colors size-8" />
+                <img src="/Group.svg" alt="" className="text-red-500 group-hover:text-orange-500 transition-colors size-8" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_red]" />
             </div>
             <div className="flex flex-col">
