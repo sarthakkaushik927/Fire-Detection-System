@@ -52,20 +52,20 @@ export default function LandingNavbar({ navigate, textEnter, textLeave, user, on
       />
 
       <nav className="fixed top-0 w-full z-50 transition-all duration-300">
-        {/* 🟢 BLURRED BACKDROP WITH GRADIENT BORDER BOTTOM */}
+       
         <div className="absolute inset-0 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 shadow-2xl" />
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/50 to-transparent opacity-50" />
 
         <div className="relative max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           
-          {/* LOGO AREA */}
+         
           <div 
             onMouseEnter={textEnter} onMouseLeave={textLeave}
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             <div className="relative">
-                <ShieldAlert className="text-red-500 group-hover:text-orange-500 transition-colors" size={24} />
+                <img src="/public/Group 803.png" alt="" className="text-red-500 group-hover:text-orange-500 transition-colors size-8" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_red]" />
             </div>
             <div className="flex flex-col">
@@ -76,10 +76,10 @@ export default function LandingNavbar({ navigate, textEnter, textLeave, user, on
             </div>
           </div>
           
-          {/* NAVIGATION BUTTONS */}
+         
           <div className="flex items-center gap-4">
             
-            {/* REPORT HAZARD (Only on desktop) */}
+            
             <button 
               onMouseEnter={textEnter} onMouseLeave={textLeave}
               onClick={() => navigate('/registry')}
@@ -88,11 +88,11 @@ export default function LandingNavbar({ navigate, textEnter, textLeave, user, on
               <FileWarning size={14} /> Report Hazard
             </button>
 
-            {/* SEPARATOR */}
+           
             <div className="h-6 w-[1px] bg-white/10 hidden md:block" />
 
             {user ? (
-                // 🟢 LOGGED IN STATE
+               
                 <div className="flex items-center gap-4">
                      <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 text-[9px] font-mono uppercase tracking-widest">
                         <Activity size={10} className="animate-pulse" /> ID: {user.email?.split('@')[0].toUpperCase()}
@@ -102,7 +102,7 @@ export default function LandingNavbar({ navigate, textEnter, textLeave, user, on
                      </NavButton>
                 </div>
             ) : (
-                // 🔴 LOGGED OUT STATE
+                
                 <NavButton onClick={() => navigate('/auth')} variant="primary">
                    <Lock size={14} /> Command Center
                 </NavButton>
