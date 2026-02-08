@@ -40,7 +40,7 @@ export default function Complaints() {
     }
   }
 
-  // 🟢 REALTIME LISTENER
+ 
   useEffect(() => {
     fetchReports()
     const channel = supabase
