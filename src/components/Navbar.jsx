@@ -138,7 +138,7 @@ export default function Navbar({ user, onLogout }) {
                  
                     <Link to="/" className="flex items-center gap-3 group mr-4">
                         <div className="bg-gradient-to-br from-orange-500 to-red-600 p-2 rounded-xl shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-all duration-300">
-                            <img src="/public/Group 803.png" alt="" className="text-white fill-white size-8" /> 
+                            <img src="/public/Group803.png" alt="" className="text-white fill-white size-8" /> 
                         </div>
                         
                       

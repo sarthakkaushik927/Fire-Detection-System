@@ -15,10 +15,10 @@ export default function Footer({ textEnter, textLeave }) {
         style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
       ></div>
 
-      
+{/*       
       <div className="absolute bottom-0 left-0 text-[12vw] font-black text-white/[0.02] pointer-events-none select-none tracking-tighter italic uppercase leading-none">
         Sector_01
-      </div>
+      </div> */}
 
       <div className="max-w-7xl mx-auto relative z-10">
         
