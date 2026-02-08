@@ -6,9 +6,9 @@ import {
   Loader2, ScanEye, Eye, EyeOff, Trash2, Siren, Crosshair
 } from 'lucide-react'
 import { supabase } from '../../Supabase/supabase' 
-import toast, { Toaster } from 'react-hot-toast' // 🟢 IMPORT TOAST
+import toast, { Toaster } from 'react-hot-toast' 
 
-// 🟢 NEW KRYPTONITE BACKEND
+
 const BACKEND_PROXY = "https://keryptonite-8k3u.vercel.app"
 
 export default function Complaints() {
