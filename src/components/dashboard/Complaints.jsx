@@ -57,7 +57,7 @@ export default function Complaints() {
     return () => supabase.removeChannel(channel)
   }, [])
 
-  // 🟢 1. DEPLOY DRONE ACTION
+
   const handleDeployDrone = (report) => {
     toast.success("Coordinates Locked. Initiating Drone Sequence.")
     navigate('/drone-control', { 

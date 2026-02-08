@@ -56,5 +56,7 @@ jobs:
           script: |
             cd ~/app
             pkill -f "serve" || true
-            nohup serve -s dist -l 3000 > ~/app.log 2>&1 &
-            echo "Application restarted successfully"
+            sleep 2
+            nohup serve -s dist -l 3000 > app.log 2>&1 &
+            sleep 1
+            ps aux | grep serve | grep -v grep
