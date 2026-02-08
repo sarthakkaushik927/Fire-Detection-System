@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 
 const CustomCursor = () => {
-  // 1. Track Mouse Position
+
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
@@ -12,7 +12,6 @@ const CustomCursor = () => {
     
     window.addEventListener("mousemove", mouseMove)
 
-    // Cleanup listener on unmount
     return () => {
       window.removeEventListener("mousemove", mouseMove)
     }

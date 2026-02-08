@@ -16,14 +16,14 @@ export default function Complaints() {
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // 🤖 AI & EMAIL STATE
+  
   const [analyzingId, setAnalyzingId] = useState(null)
   const [analysisResults, setAnalysisResults] = useState({}) 
   const [aiVerdict, setAiVerdict] = useState({}) 
   const [viewMode, setViewMode] = useState({}) 
   const [sendingEmail, setSendingEmail] = useState(false)
 
-  // 🟢 FETCH REPORTS
+  
   const fetchReports = async () => {
     try {
       const { data, error } = await supabase
@@ -72,7 +72,7 @@ export default function Complaints() {
     })
   }
 
-  // 🟢 2. AI SCAN LOGIC (UPDATED FOR KRYPTONITE API)
+
   const handleAnalyze = async (report) => {
     if (!report.image_url) return toast.error("No image evidence available")
     
@@ -80,7 +80,7 @@ export default function Complaints() {
     const toastId = toast.loading("Analyzing thermal signatures...")
 
     try {
-      // Fetch image and convert to File
+      
       const imgRes = await fetch(report.image_url)
       const blob = await imgRes.blob()
       const file = new File([blob], "evidence.jpg", { type: "image/jpeg" })
@@ -88,7 +88,7 @@ export default function Complaints() {
       const formData = new FormData()
       formData.append('image', file)
 
-      // Send to Vercel Backend
+    
       const response = await fetch(`${BACKEND_PROXY}/api/fires/draw_boxes_fire`, { 
         method: 'POST', 
         body: formData 
@@ -96,7 +96,7 @@ export default function Complaints() {
       const result = await response.json()
 
       if (result.image_base64) {
-        // Fire Found
+       
         const base64Image = `data:image/${result.format || 'jpeg'};base64,${result.image_base64}`
         setAnalysisResults(prev => ({ ...prev, [report.id]: base64Image }))
         setViewMode(prev => ({ ...prev, [report.id]: 'ai' })) 
@@ -105,7 +105,7 @@ export default function Complaints() {
         
         toast.success("⚠️ DANGER: Fire Confirmed by AI", { id: toastId, duration: 5000 })
       } else {
-        // Safe
+        
         setAiVerdict(prev => ({ ...prev, [report.id]: false }))
         updateStatus(report.id, 'false_alarm')
         toast.success("✅ Analysis Complete: No Fire Detected", { id: toastId })
@@ -119,7 +119,7 @@ export default function Complaints() {
     }
   }
 
-  // 🟢 3. SMART EMAIL SENDER
+  
   const handleSmartEmail = async (report) => {
     if (!report.email) return toast.error("No email provided in report")
     setSendingEmail(true)
@@ -170,7 +170,7 @@ export default function Complaints() {
     }
   }
 
-  // 🟢 4. RESOLVE & DELETE
+ 
   const handleResolveAndDelete = async (report) => {
     if(!window.confirm("Delete report permanently?")) return;
     try {
@@ -198,7 +198,7 @@ export default function Complaints() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black p-6 md:p-12 text-slate-900 dark:text-white">
-      {/* 🟢 TOASTER COMPONENT */}
+      
       <Toaster position="top-right" toastOptions={{ style: { background: '#333', color: '#fff' } }} />
 
       <div className="max-w-7xl mx-auto">
@@ -227,7 +227,7 @@ export default function Complaints() {
                   report.status === 'verified' ? 'border-red-500/50 shadow-red-500/10' : 'border-slate-200 dark:border-white/10'
                 }`}
               >
-                {/* IMAGE HEADER */}
+               
                 <div className="h-64 bg-slate-100 dark:bg-black relative group overflow-hidden">
                    <img 
                      src={viewMode[report.id] === 'ai' ? analysisResults[report.id] : report.image_url} 

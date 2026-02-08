@@ -9,39 +9,37 @@ export default function View() {
     useEffect(() => {
         let ws = null;
         let isMounted = true;
-        let hasConnected = false; // Track if connection succeeded
+        let hasConnected = false;
 
         const connect = () => {
-            // 🟢 Native WebSocket Connection
+          
             ws = new WebSocket(`wss://fire.anurag11.me/api/streamFireImage/ws_fire_image/${roomId}`);
 
             ws.onopen = () => {
                 if (!isMounted) return;
-                hasConnected = true; // Mark as successfully connected
+                hasConnected = true; 
                 console.log("View Socket Connected");
                 setStatus("Waiting for stream...");
-                // Backend expects ONLY image strings, so we send nothing on connect
-                // We just listen for incoming data
+               
             };
 
             ws.onmessage = (event) => {
                 if (!isMounted) return;
 
-                // 🟢 Handle Base64 String Data (Frame)
-                // Backend sends raw base64 string
+              
                 const data = event.data;
                 if (typeof data === "string") {
-                    // If it looks like base64 (not JSON error)
+                   
                     if (!data.startsWith("{")) {
                         setDetectionImage(`data:image/jpeg;base64,${data}`);
                         setStatus("Live");
                     }
-                    // Handle JSON (error messages)
+                 
                     else {
                         try {
                             const parsed = JSON.parse(data);
                             if (parsed.error) console.error("Server Error:", parsed.error);
-                        } catch (e) { /* ignore */ }
+                        } catch (e) {  }
                     }
                 }
             };
@@ -63,8 +61,7 @@ export default function View() {
 
         return () => {
             isMounted = false;
-            // Only close if connection was actually established
-            // This prevents StrictMode from closing the socket prematurely
+            
             if (ws && hasConnected) {
                 ws.close();
             }
@@ -73,7 +70,7 @@ export default function View() {
 
     return (
         <div className="relative w-full h-screen bg-black flex items-center justify-center">
-            {/* Status Overlay */}
+           
             <div className={`absolute top-4 left-4 z-50 px-4 py-2 rounded-lg font-bold shadow-lg ${status === "Live" ? "bg-green-600 text-white" : "bg-yellow-600 text-black"
                 }`}>
                 {status}

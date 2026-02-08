@@ -14,19 +14,19 @@ export default function ContactSection({ textEnter, textLeave }) {
     const toastId = toast.loading("Establishing Secure Uplink...")
 
     try {
-      // 🟢 1. SAVE TO DATABASE (This makes it show up in Dashboard Inbox)
+     
       const { error: dbError } = await supabase
         .from('contact_messages')
         .insert([{ 
             name: formData.name, 
             email: formData.email, 
             message: formData.message,
-            status: 'unread' // Mark as unread for the admin
+            status: 'unread' 
         }])
 
       if (dbError) throw dbError
 
-      // 🟢 2. UI SUCCESS STATE
+      
       toast.success("Transmission Received & Logged", { id: toastId })
       setFormData({ name: '', email: '', message: '' })
 
@@ -42,20 +42,20 @@ export default function ContactSection({ textEnter, textLeave }) {
     <section className="py-32 px-6 bg-[#020617] relative overflow-hidden border-t border-red-600/20" id="contact">
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#0f172a', color: '#fff' }}} />
       
-      {/* 🟦 THEME MATCHING GRID */}
+    
       <div 
         className="absolute inset-0 opacity-[0.1] pointer-events-none" 
         style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
       ></div>
 
-      {/* 🛑 SECTOR WATERMARK */}
+     
       <div className="absolute top-20 right-10 text-[15vw] font-black text-red-600/[0.03] pointer-events-none select-none tracking-tighter italic uppercase">
         Inbound
       </div>
 
       <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-16 items-start relative z-10">
         
-        {/* Left Side: Mission Briefing */}
+        
         <motion.div 
           className="lg:col-span-5"
           initial={{ opacity: 0, x: -30 }}
@@ -89,19 +89,19 @@ export default function ContactSection({ textEnter, textLeave }) {
           </div>
         </motion.div>
 
-        {/* Right Side: Tactical Terminal */}
+       
         <motion.div 
           className="lg:col-span-7 relative"
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
         >
-          {/* Decorative Corner Brackets */}
+         
           <div className="absolute -top-4 -left-4 w-12 h-12 border-t-2 border-l-2 border-red-600/50" />
           <div className="absolute -bottom-4 -right-4 w-12 h-12 border-b-2 border-r-2 border-red-600/50" />
 
           <div className="bg-slate-900/40 border border-white/10 p-8 md:p-12 rounded-3xl backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-            {/* Inner Scanline Effect */}
+            
             <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%)] bg-[size:100%_4px]" />
 
             <div className="flex items-center gap-3 mb-10 pb-4 border-b border-white/5">

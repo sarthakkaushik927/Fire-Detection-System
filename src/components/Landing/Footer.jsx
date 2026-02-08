@@ -9,23 +9,23 @@ export default function Footer({ textEnter, textLeave }) {
   return (
     <footer className="relative pt-24 pb-12 px-6 bg-[#020617] overflow-hidden border-t border-red-600/20">
       
-      {/* 🟦 THEME GRID */}
+      
       <div 
         className="absolute inset-0 opacity-[0.1] pointer-events-none" 
         style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
       ></div>
 
-      {/* 🛑 SECTOR WATERMARK */}
+      
       <div className="absolute bottom-0 left-0 text-[12vw] font-black text-white/[0.02] pointer-events-none select-none tracking-tighter italic uppercase leading-none">
         Sector_01
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         
-        {/* --- MAIN NAVIGATION GRID --- */}
+        
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 pb-16 border-b border-white/5">
           
-          {/* BRANDING COLUMN */}
+          
           <div className="col-span-2 lg:col-span-2 pr-8">
             <div className="flex items-center gap-2 mb-6 text-white cursor-none" onMouseEnter={textEnter} onMouseLeave={textLeave}>
                 <ShieldAlert className="text-red-600" size={32} />
@@ -39,7 +39,7 @@ export default function Footer({ textEnter, textLeave }) {
             </div>
           </div>
 
-          {/* COLUMN 1 */}
+         
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-widest">
               <Terminal size={14}/> Systems
@@ -52,7 +52,7 @@ export default function Footer({ textEnter, textLeave }) {
             </ul>
           </div>
 
-          {/* COLUMN 2 */}
+         
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-widest">
               <ShieldCheck size={14}/> Security
@@ -65,7 +65,7 @@ export default function Footer({ textEnter, textLeave }) {
             </ul>
           </div>
 
-          {/* COLUMN 3 */}
+          
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-widest">
               <MapPin size={14}/> Deployment
@@ -79,7 +79,7 @@ export default function Footer({ textEnter, textLeave }) {
           </div>
         </div>
 
-        {/* --- 3. SYSTEM STATUS BAR (The Bottom Bar) --- */}
+        
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-8 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600">
             <span>© 2026 Grid_Defense Systems</span>

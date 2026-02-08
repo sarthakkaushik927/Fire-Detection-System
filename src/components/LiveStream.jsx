@@ -34,7 +34,7 @@ const LiveStream = () => {
       animate="visible"
       className="relative p-4 md:p-6 min-h-[calc(100vh-64px)] overflow-hidden"
     >
-      {/* Background Image with Overlay */}
+     
       <div
         className="absolute inset-0 bg-cover bg-bottom bg-no-repeat"
         style={{
@@ -44,7 +44,7 @@ const LiveStream = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
-      {/* Content */}
+     
       <div className="relative z-10 opacity-80  ">
         <LiveStreamQR />
       </div>

@@ -5,14 +5,14 @@ import { Megaphone, FileWarning, ShieldCheck, Activity } from 'lucide-react'
 export default function RegistryCTA({ navigate, textEnter, textLeave }) {
   return (
     <section className="py-32 px-6 bg-salate-900 relative overflow-hidden">
-      {/* Background Decorative Elements */}
+     
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
       <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
       
       <div className="max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           
-          {/* Left Side: Animated Intel UI */}
+          
           <div className="relative group">
             <div className="absolute -inset-4 bg-orange-500/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-duration-700" />
             <div className="relative bg-slate-900/80 border border-orange-500/30 p-8 rounded-2xl backdrop-blur-xl">
@@ -40,7 +40,6 @@ export default function RegistryCTA({ navigate, textEnter, textLeave }) {
             </div>
           </div>
 
-          {/* Right Side: Copy */}
           <motion.div 
             initial={{ opacity: 0, x: 50 }} 
             whileInView={{ opacity: 1, x: 0 }} 

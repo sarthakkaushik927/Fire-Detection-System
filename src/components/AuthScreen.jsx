@@ -14,7 +14,7 @@ export default function AuthScreen({ onLogin }) {
 
   const NATURE_BG = "https://img.freepik.com/free-photo/beautiful-watercolor-nature-landscape_23-2151864817.jpg?semt=ais_hybrid&w=740&q=80"
 
-  // 🟢 1. GOOGLE OAUTH (Popup / Redirect)
+ 
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -27,17 +27,17 @@ export default function AuthScreen({ onLogin }) {
     }
   }
 
-  // 🟢 2. SUBMIT HANDLER (Handles both Magic Link AND Admin Backdoor)
+ 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
-    // A. ADMIN BACKDOOR CHECK
+    
     if (email === 'admin') {
-      // Simulate delay for realism
+    
       setTimeout(() => {
         if (password === 'admin123') {
-          // Fake Admin User Object
+          
           const adminUser = { 
             id: 'admin-master', 
             email: 'admin@firewatch.pro', 
@@ -54,7 +54,7 @@ export default function AuthScreen({ onLogin }) {
       return
     }
 
-    // B. REAL USER MAGIC LINK FLOW
+  
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -74,7 +74,7 @@ export default function AuthScreen({ onLogin }) {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden font-sans">
       
-      {/* 🖼️ Background */}
+      
       <div className="absolute inset-0 z-0 bg-cover bg-center scale-105" style={{ backgroundImage: `url(${NATURE_BG})` }} />
       <div className="absolute inset-0 z-10 bg-slate-950/40 backdrop-blur-[3px]" />
 
@@ -84,7 +84,6 @@ export default function AuthScreen({ onLogin }) {
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-white/10 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] p-8 md:p-10 shadow-2xl relative z-20 overflow-hidden">
         
-        {/* Header */}
         <div className="text-center mb-8 relative z-10">
           <div className="w-16 h-16 bg-red-600 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg shadow-red-500/40">
             <Shield size={32} className="text-white" />
@@ -96,7 +95,7 @@ export default function AuthScreen({ onLogin }) {
         </div>
 
         {magicLinkSent ? (
-           /* ✅ SUCCESS STATE: CHECK EMAIL */
+        
            <div className="text-center py-6">
               <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/50">
                 <CheckCircle2 size={32} />
@@ -116,7 +115,7 @@ export default function AuthScreen({ onLogin }) {
         ) : (
           <div className="space-y-6 relative z-10">
             
-            {/* 🟢 OPTION 1: GOOGLE BUTTON */}
+           
             <button 
                 onClick={handleGoogleLogin} 
                 className="w-full bg-white text-black font-bold uppercase tracking-widest py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95 hover:bg-slate-200"
@@ -131,7 +130,6 @@ export default function AuthScreen({ onLogin }) {
                 <div className="h-[1px] flex-grow bg-white/10"></div>
             </div>
 
-            {/* 🟢 OPTION 2: MAGIC LINK FORM */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="group relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -144,7 +142,7 @@ export default function AuthScreen({ onLogin }) {
                     />
                 </div>
 
-                {/* 🔒 STEALTH ADMIN PASSWORD FIELD (Only visible if email is 'admin') */}
+                
                 <AnimatePresence>
                   {email === 'admin' && (
                     <motion.div 
@@ -178,7 +176,6 @@ export default function AuthScreen({ onLogin }) {
           </div>
         )}
         
-        {/* Footer info */}
         <div className="mt-8 text-center border-t border-white/10 pt-6">
           <p className="text-[10px] text-slate-400 font-mono tracking-widest uppercase">
             Protocol: <span className="text-green-500">Magic_Link_Auth_v2</span>

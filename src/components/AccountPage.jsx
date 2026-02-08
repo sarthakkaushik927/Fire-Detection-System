@@ -13,12 +13,10 @@ const PERF_DATA = [
   { name: 'May', success: 75 }, { name: 'Jun', success: 95 },
 ]
 
-// 🟢 Now accepts the 'user' prop directly
 export default function AccountPage({ user }) {
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   
-  // 🟢 Safe Access: Works for both Supabase Auth and Simulated 'admin'
   const [formData, setFormData] = useState({
     full_name: user?.user_metadata?.full_name || user?.name || 'Operator',
     phone: user?.user_metadata?.phone || '+91-000-000-0000',
@@ -29,12 +27,12 @@ export default function AccountPage({ user }) {
   const handleSave = async () => {
     setLoading(true)
     try {
-      // If using real Supabase Auth
+     
       if (user?.id) {
           const { error } = await supabase.auth.updateUser({ data: formData })
           if (error) throw error
       }
-      // Update local UI only for simulated user
+    
       setIsEditing(false)
       alert("✅ Profile updated successfully")
     } catch (error) {
@@ -49,10 +47,8 @@ export default function AccountPage({ user }) {
       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       className="max-w-[1400px] mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-12 gap-8"
     >
-      {/* LEFT COLUMN */}
       <div className="md:col-span-4 space-y-8">
         
-        {/* Identity Card */}
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-white/10 text-center relative overflow-hidden shadow-xl transition-colors duration-300">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-orange-500"></div>
           <div className="w-32 h-32 rounded-full mx-auto mb-6 p-1 bg-gradient-to-tr from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800">
@@ -73,7 +69,6 @@ export default function AccountPage({ user }) {
           </div>
         </div>
 
-        {/* Skills */}
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-white/10 shadow-lg transition-colors duration-300">
            <h3 className="font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
              <Award size={18} className="text-yellow-500"/> Certifications
@@ -86,10 +81,10 @@ export default function AccountPage({ user }) {
         </div>
       </div>
 
-      {/* RIGHT COLUMN */}
+      
       <div className="md:col-span-8 space-y-8">
         
-        {/* Edit Details */}
+       
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-white/10 shadow-lg transition-colors duration-300">
             <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
@@ -114,7 +109,6 @@ export default function AccountPage({ user }) {
             </div>
         </div>
 
-        {/* Performance Chart */}
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-200 dark:border-white/10 shadow-lg transition-colors duration-300">
            <h3 className="font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
              <TrendingUp size={18} className="text-green-500"/> Mission Success Rate
@@ -136,7 +130,6 @@ export default function AccountPage({ user }) {
            </div>
         </div>
 
-        {/* Terminal Log */}
         <div className="bg-slate-950 rounded-3xl p-6 border border-slate-800 font-mono text-xs shadow-inner">
            <div className="flex items-center gap-2 text-slate-500 mb-4 pb-2 border-b border-slate-800">
               <Terminal size={14} /> SYSTEM_LOGS.txt

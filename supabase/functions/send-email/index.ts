@@ -15,7 +15,7 @@ serve(async (req) => {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   }
 
-  // Handle CORS preflight requests
+ 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -25,9 +25,9 @@ serve(async (req) => {
     let htmlContent = ''
     let emailSubject = subject || "FireWatch Notification"
 
-    // 🟢 TEMPLATE 1: TACTICAL REPLY (Clean, Professional, "Memo" Style)
+   
     if (type === 'reply') {
-        const accent = '#3b82f6' // Tactical Blue
+        const accent = '#3b82f6' 
         htmlContent = `
           <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: 0 auto; background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 6px solid ${accent};">
             
@@ -47,7 +47,7 @@ serve(async (req) => {
           </div>
         `
     } 
-    // 🟢 TEMPLATE 2: REPORT CONFIRMATION (For Hazard Reporting)
+    
     else if (type === 'confirmation') {
         emailSubject = `🔥 FireWatch: Report Received`
         htmlContent = `
@@ -61,7 +61,7 @@ serve(async (req) => {
           </div>
         `
     } 
-    // 🟢 TEMPLATE 3: ALERTS (For Critical Updates)
+  
     else {
         const isDanger = status === 'verified'
         const color = isDanger ? '#dc2626' : '#16a34a'
@@ -74,7 +74,7 @@ serve(async (req) => {
         `
     }
 
-    // --- SEND EMAIL ---
+    
     console.log(`📨 Sending via Gmail to: ${to}`)
     
     const info = await transporter.sendMail({

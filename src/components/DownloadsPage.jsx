@@ -10,12 +10,12 @@
     const [images, setImages] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedImage, setSelectedImage] = useState(null)
-    const [filter, setFilter] = useState('all') // 'all', 'capture', 'simulation'
+    const [filter, setFilter] = useState('all') 
 
     useEffect(() => {
         fetchImages()
         
-        // 🟢 Real-time Listener: Auto-update when Dashboard uploads new files
+    
         const channel = supabase.channel('public:downloads')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'downloads' }, () => {
             fetchImages()
@@ -25,7 +25,6 @@
         return () => supabase.removeChannel(channel)
     }, [])
 
-    // 🟢 1. FETCH FROM SUPABASE
     const fetchImages = async () => {
         try {
         const { data, error } = await supabase
@@ -43,7 +42,6 @@
         }
     }
 
-    // 🟢 2. DELETE FROM SUPABASE
     const handleDelete = async (id, e) => {
         e.stopPropagation()
         if (window.confirm("Delete this file permanently from the cloud?")) {
@@ -58,7 +56,6 @@
         }
     }
 
-    // Filter Logic
     const filteredImages = images.filter(img => {
         const type = img.type || 'capture'
         if (filter === 'all') return true
@@ -68,7 +65,6 @@
     return (
         <div className="min-h-screen p-4 md:p-8 pt-24 max-w-[1600px] mx-auto">
         
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div className="flex items-center gap-4">
                 <button onClick={() => navigate('/dashboard')} className="p-3 bg-white dark:bg-slate-800 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-sm border border-slate-200 dark:border-white/10">
@@ -83,7 +79,6 @@
                 </div>
             </div>
 
-            {/* Filter Tabs */}
             <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-x-auto">
             {[
                 { id: 'all', label: 'All Files' },
@@ -105,7 +100,6 @@
             </div>
         </div>
 
-        {/* GALLERY GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {loading && images.length === 0 ? (
                 <div className="col-span-full h-96 flex flex-col items-center justify-center">
@@ -130,7 +124,6 @@
                         <div className="aspect-video bg-slate-100 dark:bg-black relative overflow-hidden">
                             <img src={img.image_url} alt="Capture" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                             
-                            {/* TYPE BADGE */}
                             <div className="absolute top-3 left-3 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/20 flex items-center gap-1 shadow-sm text-white bg-black/40">
                                 {img.type === 'simulation' ? <><Cpu size={10} className="text-blue-400"/> AI Sim</> : <><Camera size={10} className="text-orange-400"/> Capture</>}
                             </div>
@@ -161,7 +154,6 @@
             )}
         </div>
 
-        {/* FULLSCREEN MODAL */}
         <AnimatePresence>
             {selectedImage && (
                 <motion.div 

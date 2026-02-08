@@ -17,14 +17,14 @@ export default function Ticker() {
       <div className="py-4 flex whitespace-nowrap">
         <motion.div 
           className="flex gap-24 pr-24 text-white font-mono font-black uppercase text-base tracking-[0.2em]"
-          animate={{ x: [0, -1920] }} // Uses pixels for better smoothness
+          animate={{ x: [0, -1920] }} 
           transition={{ 
             repeat: Infinity, 
-            duration: 50, // 🟢 Higher = Slower. 100 is very cinematic.
+            duration: 50, 
             ease: "linear" 
           }}
         >
-          {/* We repeat the array twice to ensure a seamless infinite loop */}
+          
           {[...Array(10)].map((_, i) => (
             <React.Fragment key={i}>
               {tickerData}

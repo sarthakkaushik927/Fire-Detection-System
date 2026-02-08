@@ -113,7 +113,7 @@ const DataAnalysis = () => {
                         <p className="text-slate-400 font-mono text-sm">Processing Data Stream...</p>
                     </div>
                 ) : images.length > 0 ? (
-                    // 🟢 IMAGE GRID
+                  
                     <motion.div
                         className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                         variants={containerVariants}
@@ -133,7 +133,7 @@ const DataAnalysis = () => {
                                     <h3 className="text-sm font-black uppercase text-slate-500 tracking-wider">Graph {index + 1}</h3>
                                 </div>
 
-                                {/* Image Container */}
+                                
                                 <div className="relative rounded-2xl overflow-hidden bg-slate-50 dark:bg-black/40 border border-slate-100 dark:border-white/5 p-2 flex items-center justify-center min-h-[350px]">
                                     <img
                                         src={imgSrc}

@@ -10,10 +10,10 @@ import { useTheme } from '../context/ThemeContext'
 import LogoutModal from './LogoutModal'
 import Chatbot from './Chatbot'
 
-// Backend Config
+
 const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
 
-// Helper to create sector names
+
 const generateSectorName = (lat, lon) => {
   const zones = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'ZULU', 'OMEGA', 'TITAN', 'NOVA'];
   const index = Math.floor((Math.abs(lat) + Math.abs(lon)) * 100) % zones.length;
@@ -123,31 +123,31 @@ export default function Navbar({ user, onLogout }) {
       
       <Chatbot />
 
-      {/* 🟢 UNIFIED LIQUID GLASS NAVBAR */}
+     
       <nav className="sticky top-0 z-[60] w-full  pb-2">
         <div className="mx-auto max-w-screen">
             
-            {/* The Single Continuous Glass Bar */}
+         
             <div className="relative w-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl transition-all duration-300 overflow-visible">
                 
-                {/* Glossy Sheen Overlay */}
+               
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
 
                 <div className="flex items-center justify-between h-16 px-4 md:px-6 relative z-10">
                     
-                    {/* Left: Branding */}
+                 
                     <Link to="/" className="flex items-center gap-3 group mr-4">
                         <div className="bg-gradient-to-br from-orange-500 to-red-600 p-2 rounded-xl shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 transition-all duration-300">
                             <Flame size={20} className="text-white fill-white" />
                         </div>
                         
-                        {/* 🟢 FIX: Removed 'hidden sm:block' so it shows on mobile */}
+                      
                         <span className="font-black text-lg md:text-xl tracking-tighter text-slate-800 dark:text-white">
                             FIRE<span className="text-orange-600">WATCH</span>
                         </span>
                     </Link>
 
-                    {/* Center: Navigation Links (Desktop) */}
+               
                     <div className="hidden lg:flex items-center justify-center gap-1 flex-1">
                         {navLinks.map((item) => {
                             const active = isActive(item.path);
@@ -161,7 +161,7 @@ export default function Navbar({ user, onLogout }) {
                                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
                                     }`}
                                 >
-                                    {/* Liquid Background for Active Item */}
+                                  
                                     {active && (
                                         <motion.div 
                                             layoutId="liquid-nav-bg"
@@ -178,10 +178,10 @@ export default function Navbar({ user, onLogout }) {
                         })}
                     </div>
 
-                    {/* Right: Controls & Profile */}
+                   
                     <div className="flex items-center gap-2 md:gap-3 ml-auto">
                         
-                        {/* Theme Toggle */}
+                     
                         <button 
                             onClick={toggleTheme} 
                             className="p-2 md:p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-colors"
@@ -189,7 +189,7 @@ export default function Navbar({ user, onLogout }) {
                             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
 
-                        {/* Notifications */}
+                       
                         <div className="relative">
                             <button 
                                 onClick={() => setShowNotifs(!showNotifs)} 
@@ -203,7 +203,7 @@ export default function Navbar({ user, onLogout }) {
                                 {!loading && notifications.length > 0 && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-600 border-2 border-white dark:border-slate-900 rounded-full animate-ping" />}
                             </button>
                             
-                            {/* Glass Dropdown */}
+                          
                             <AnimatePresence>
                                 {showNotifs && (
                                     <motion.div
@@ -262,10 +262,10 @@ export default function Navbar({ user, onLogout }) {
                             </AnimatePresence>
                         </div>
 
-                        {/* Divider */}
+                       
                         <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1 hidden sm:block" />
 
-                        {/* Profile & Logout */}
+                       
                         <div className="hidden sm:flex items-center gap-2">
                             <Link to="/account" className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-white hover:ring-2 ring-orange-500/50 transition-all">
                                 <User size={16} />
@@ -275,7 +275,7 @@ export default function Navbar({ user, onLogout }) {
                             </button>
                         </div>
 
-                        {/* Mobile Toggle */}
+                       
                         <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden p-2.5 text-slate-600 dark:text-white">
                             {isOpen ? <X size={22} /> : <Menu size={22} />}
                         </button>
@@ -284,7 +284,7 @@ export default function Navbar({ user, onLogout }) {
             </div>
         </div>
 
-        {/* 🟢 MOBILE MENU GLASS DROPDOWN */}
+
         <AnimatePresence>
           {isOpen && (
             <motion.div 

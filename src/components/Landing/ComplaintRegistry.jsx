@@ -70,7 +70,7 @@ export default function ComplaintRegistry({ isStandalone }) {
 
       if (dbError) throw dbError
 
-      // Email Logic...
+      
       toast.success("Transmission Confirmed", { id: toastId })
       setStatus('success')
       setForm({ description: '', email: '', lat: form.lat, lng: form.lng })
@@ -86,16 +86,16 @@ export default function ComplaintRegistry({ isStandalone }) {
     <div className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden font-sans">
       <Toaster position="top-center" toastOptions={{ style: { background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
       
-      {/* 🖼️ TACTICAL CONTROL ROOM BACKGROUND */}
+   
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center scale-105"
         style={{ backgroundImage: `url(${CONTROL_ROOM_BG})` }}
       />
 
-      {/* 🌑 GLASS THEME OVERLAY */}
+  
       <div className="absolute inset-0 z-10 bg-slate-950/65 backdrop-blur-[5px]" />
 
-      {/* 🔙 RETURN BUTTON */}
+    
       <button 
         onClick={() => navigate('/')} 
         className="absolute top-8 left-8 z-50 flex items-center gap-2 text-white/70 hover:text-white transition-all bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 font-mono text-[10px] uppercase tracking-widest"
@@ -103,7 +103,7 @@ export default function ComplaintRegistry({ isStandalone }) {
         <ArrowLeft size={14} /> Abort Mission
       </button>
 
-      {/* 🚀 REGISTRY CARD */}
+    
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -138,7 +138,7 @@ export default function ComplaintRegistry({ isStandalone }) {
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Image Upload Area */}
+              
               <div className="relative group">
                 <input type="file" accept="image/*" onChange={handleImageChange} className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20 ${preview ? 'hidden' : 'block'}`} />
                 <div className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all duration-300 bg-black/20 ${
@@ -162,7 +162,6 @@ export default function ComplaintRegistry({ isStandalone }) {
                 </div>
               </div>
 
-              {/* Text Inputs */}
               <div className="space-y-4">
                 <textarea 
                   required 
@@ -181,7 +180,7 @@ export default function ComplaintRegistry({ isStandalone }) {
                   placeholder="Commander Email for confirmation" 
                 />
                 
-                {/* GPS Telemetry Bar */}
+                
                 <div className="flex items-center justify-between bg-black/60 p-4 rounded-2xl border border-white/5">
                   <div className="flex items-center gap-3">
                     <MapPin className="text-orange-500" size={16} />
@@ -204,7 +203,7 @@ export default function ComplaintRegistry({ isStandalone }) {
         </AnimatePresence>
       </motion.div>
 
-      {/* 📡 Grid UI Detail */}
+      
       <div className="absolute inset-0 pointer-events-none z-30 opacity-10" 
            style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
     </div>

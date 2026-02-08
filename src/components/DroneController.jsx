@@ -5,27 +5,22 @@ import { Menu, X, Locate } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useLocation } from 'react-router-dom'
 
-// 🟢 IMPORTS
 import { getDistance, calculateNewPos } from '../utils/geoUtils'
 import DroneSidebar from './drone/DroneSidebar'
 import VirtualJoysticks from './drone/VirtualJoysticks'
 
-// Disable telemetry to stop console errors
 mapboxgl.config.telemetry = false
 
 const DroneController = () => {
   const location = useLocation()
 
-  // --- STATE ---
   const [telemetry, setTelemetry] = useState({
     alt: 120, speed: 0, battery: 88, satellites: 14, signal: 92, distanceRemaining: 0
   })
 
-  // Default Base Location
   const [baseLat, setBaseLat] = useState('35.1691')
   const [baseLng, setBaseLng] = useState('138.7189')
   
-  // Target Location
   const [targetLat, setTargetLat] = useState('35.3397')
   const [targetLng, setTargetLng] = useState('138.7265')
   
@@ -39,22 +34,18 @@ const DroneController = () => {
   const animationFrameRef = useRef(null)
   const dronePosRef = useRef([138.7189, 35.1691])
 
-  // --- LOCK LOGIC ---
   const performLock = (tLat, tLng) => {
     if (!mapRef.current) return
 
     setIsLocked(true)
     setStatus('LOCKED')
     
-    // Teleport Drone back to Base to start mission
     const start = [parseFloat(baseLng), parseFloat(baseLat)]
     dronePosRef.current = start
     updateDroneMarker(start)
     
-    // Move Camera
     mapRef.current.flyTo({ center: start, zoom: 14, pitch: 70 })
 
-    // Draw Route Line
     const end = [parseFloat(tLng), parseFloat(tLat)]
     const route = { type: 'Feature', geometry: { type: 'LineString', coordinates: [start, end] } }
 
@@ -71,12 +62,10 @@ const DroneController = () => {
         })
     }
     
-    // Update Stats
     const dist = getDistance(start[1], start[0], end[1], end[0])
     setTelemetry(p => ({ ...p, distanceRemaining: Math.floor(dist) }))
   }
 
-  // --- AUTO-LOCK ON REDIRECT ---
   useEffect(() => {
     if (location.state?.lat && location.state?.lon) {
         const { lat, lon } = location.state
@@ -96,13 +85,12 @@ const DroneController = () => {
     }
   }, [location])
 
-  // --- MAP SETUP ---
   useEffect(() => {
     mapboxgl.accessToken = 'pk.eyJ1IjoiYW51dXUxMTExMTExMSIsImEiOiJjbWxiend6dGUwcWlpM2ZzOTBseWZjenpqIn0.UmHLNCHiLOb8XLa0JvMmJQ'
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      // 🟢 CHANGED: Using satellite-streets to get labels we can filter
+    
       style: 'mapbox://styles/mapbox/satellite-streets-v12', 
       center: [parseFloat(baseLng), parseFloat(baseLat)],
       zoom: 14,
@@ -115,25 +103,22 @@ const DroneController = () => {
     mapRef.current = map
 
     map.on('load', () => {
-      // 🟢 1. FILTER MAP ELEMENTS (Hide clutter, show emergency)
-      // Hide standard POIs unless they are critical
       if (map.getLayer('poi-label')) {
          map.setFilter('poi-label', [
             'match',
             ['get', 'class'], 
-            ['hospital', 'police', 'fire_station', 'medical'], // Only show these
+            ['hospital', 'police', 'fire_station', 'medical'], 
             true,
-            false // Hide everything else
+            false 
          ])
       }
       
-      // Hide commercial areas/transit to reduce noise
+    
       const layersToHide = ['transit-label', 'road-label-simple', 'waterway-label']
       layersToHide.forEach(layer => {
           if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', 'none')
       })
 
-      // 🟢 2. ADD DRONE
       const pointData = {
         type: 'FeatureCollection',
         features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [parseFloat(baseLng), parseFloat(baseLat)] } }]
@@ -167,7 +152,6 @@ const DroneController = () => {
     }
   }, [])
 
-  // Helpers
   const updateDroneMarker = (coords) => {
     const map = mapRef.current
     if (map && map.getSource('drone-point')) {

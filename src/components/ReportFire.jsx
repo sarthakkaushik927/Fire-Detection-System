@@ -8,12 +8,12 @@ export default function ReportFire() {
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState(null)
   const [location, setLocation] = useState(null)
-  const [email, setEmail] = useState('') // 🟢 New Email State
+  const [email, setEmail] = useState('') 
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const fileInputRef = useRef(null)
 
-  // 1. Get GPS Location
+  
   const getLocation = () => {
     setLoading(true)
     if (navigator.geolocation) {
@@ -30,7 +30,7 @@ export default function ReportFire() {
     }
   }
 
-  // 2. Handle Image Selection
+
   const handleFile = (e) => {
     const selected = e.target.files[0]
     if (selected) {
@@ -40,13 +40,13 @@ export default function ReportFire() {
     }
   }
 
-  // 3. Upload to Supabase & Save Email
+ 
   const handleSubmit = async () => {
     if (!file || !location || !email) return alert("Please provide photo, location, and email.")
     
     setLoading(true)
     try {
-      // A. Upload Image
+     
       const fileName = `${Date.now()}_fire_report.jpg`
       const { error: uploadError } = await supabase.storage
         .from('fire-reports') 
@@ -57,7 +57,7 @@ export default function ReportFire() {
       const { data: publicUrlData } = supabase.storage.from('fire-reports').getPublicUrl(fileName)
       const imageUrl = publicUrlData.publicUrl
 
-      // B. Save Data (Including Email)
+      
       const { error: dbError } = await supabase
         .from('reports') 
         .insert([{ 
@@ -65,7 +65,7 @@ export default function ReportFire() {
            latitude: location.lat, 
            longitude: location.lon, 
            status: 'pending',
-           email: email // 🟢 Saving Email
+           email: email 
         }])
 
       if (dbError) throw dbError
@@ -94,7 +94,7 @@ export default function ReportFire() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col p-6 max-w-md mx-auto relative overflow-hidden transition-colors">
       
-      {/* 🟢 BACK BUTTON */}
+   
       <button onClick={() => navigate('/')} className="absolute top-6 left-6 p-2 bg-white dark:bg-slate-900 rounded-full shadow-md z-10 text-slate-600 dark:text-white">
         <ArrowLeft size={20} />
       </button>
@@ -105,7 +105,7 @@ export default function ReportFire() {
 
       <div className="flex-1 flex flex-col gap-4">
         
-        {/* Step 1: Image Capture */}
+        
         <div 
           onClick={() => fileInputRef.current.click()}
           className="aspect-square bg-slate-200 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-400 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative active:scale-95 transition-transform group"
@@ -121,7 +121,7 @@ export default function ReportFire() {
           <input type="file" ref={fileInputRef} onChange={handleFile} accept="image/*" capture="environment" className="hidden" />
         </div>
 
-        {/* Step 2: Location Status */}
+      
         <div className={`p-4 rounded-xl flex items-center gap-3 border ${location ? 'bg-green-50 border-green-200 text-green-700' : 'bg-orange-50 border-orange-200 text-orange-700'}`}>
           <MapPin size={20} className={loading && !location ? "animate-bounce" : ""} />
           <div className="flex-1">
@@ -129,8 +129,6 @@ export default function ReportFire() {
             <p className="text-[10px] font-mono">{location ? `${location.lat.toFixed(5)}, ${location.lon.toFixed(5)}` : "Waiting for GPS..."}</p>
           </div>
         </div>
-
-        {/* 🟢 Step 3: Email Input */}
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-3">
            <Mail size={20} className="text-slate-400"/>
            <input 
@@ -142,7 +140,7 @@ export default function ReportFire() {
            />
         </div>
 
-        {/* Submit Button */}
+       
         <button 
           onClick={handleSubmit} 
           disabled={!file || !location || !email || loading}

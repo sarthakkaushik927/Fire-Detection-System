@@ -9,7 +9,7 @@ export default function WeatherWidget() {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        // Native Fetch - No Axios needed
+      
         const res = await fetch(
           "https://api.open-meteo.com/v1/forecast?latitude=28.61&longitude=77.20&current=temperature_2m,relative_humidity_2m,wind_speed_10m&wind_speed_unit=kn"
         )
@@ -25,7 +25,7 @@ export default function WeatherWidget() {
     fetchWeather()
   }, [])
 
-  if (error) return null // Hide widget silently if it fails
+  if (error) return null 
   
   if (loading) return (
     <div className="bg-blue-600/20 h-24 rounded-2xl animate-pulse flex items-center justify-center">

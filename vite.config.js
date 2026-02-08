@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      // 🟢 This redirects your frontend calls to your backend server
+      
       '/api': {
-        target: 'https://keryptonite-8k3u.vercel.app', // 🟢 Use your actual backend URL here
+        target: 'https://keryptonite-8k3u.vercel.app',
         changeOrigin: true,
         secure: false,
       }

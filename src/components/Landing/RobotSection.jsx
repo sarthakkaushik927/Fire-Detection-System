@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Bot, Crosshair, Zap, Target } from 'lucide-react'
 
 export default function RobotSection({ variants }) {
-  // 🟢 Typewriter Animation Logic
+  
   const sentence = "AUTONOMOUS NEUTRALIZATION"
   const letterVariants = {
     hidden: { opacity: 0 },
@@ -12,13 +12,13 @@ export default function RobotSection({ variants }) {
 
   return (
     <section className="py-32 px-6 relative z-10 bg-[#0a29b0] overflow-hidden border-t border-white/5">
-      {/* 🟦 THEME MATCHING GRID BACKGROUND */}
+      
       <div 
         className="absolute inset-0 opacity-[0.15] pointer-events-none" 
         style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '50px 50px' }}
       ></div>
 
-      {/* 📡 Background Radar Glow */}
+      
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 animate-pulse" />
 
       <motion.div 
@@ -33,7 +33,7 @@ export default function RobotSection({ variants }) {
           whileHover={{ rotateY: 5, rotateX: -2 }}
           style={{ perspective: 1000 }}
         >
-          {/* 🎯 HUD OVERLAY */}
+    
           <div className="absolute inset-0 z-20 pointer-events-none border-[20px] border-transparent p-4 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-500">
              <div className="flex justify-between">
                 <div className="w-8 h-8 border-t-2 border-l-2 border-red-500" />
@@ -63,7 +63,7 @@ export default function RobotSection({ variants }) {
             <span className="text-red-500 font-mono text-xs font-bold uppercase tracking-[0.3em]">Tactical Asset_01</span>
           </div>
 
-          {/* ⌨️ TYPEWRITER HEADER */}
+      
           <motion.h2 
             className="text-5xl md:text-6xl font-black mb-8 uppercase tracking-tighter text-white leading-none italic"
             initial="hidden"

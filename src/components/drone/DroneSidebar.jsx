@@ -25,7 +25,7 @@ const DroneSidebar = ({
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
       
-      {/* Header */}
+      
       <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 pt-16 md:pt-4 flex justify-between items-center shadow-sm z-10">
         <div>
           <h2 className="text-lg font-black uppercase tracking-widest flex items-center gap-2 text-slate-800 dark:text-white">
@@ -39,10 +39,10 @@ const DroneSidebar = ({
         <button onClick={() => setSidebarOpen(false)} className="md:hidden text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"><X size={20}/></button>
       </div>
 
-      {/* Controls Section */}
+     
       <div className="p-4 space-y-6 border-b border-slate-200 dark:border-white/10 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-transparent">
         
-        {/* Base Station Inputs */}
+        
         <div className="space-y-2">
           <div className="flex justify-between items-center">
              <label className="text-[10px] uppercase font-black tracking-wider text-slate-600 dark:text-slate-400">Base Station</label>
@@ -69,7 +69,7 @@ const DroneSidebar = ({
           </div>
         </div>
 
-        {/* Target Inputs */}
+        
         <div className="space-y-2">
           <div className="flex justify-between items-center">
              <label className="text-[10px] uppercase font-black tracking-wider text-slate-600 dark:text-slate-400">Destination</label>
@@ -96,7 +96,7 @@ const DroneSidebar = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
+       
         <div className="grid grid-cols-2 gap-3 pt-2">
           <button 
             onClick={handleLockTarget}
@@ -127,7 +127,7 @@ const DroneSidebar = ({
         </div>
       </div>
 
-      {/* Telemetry Stats Grid - 🟢 UPDATED COLORS FOR BETTER VISIBILITY */}
+    
       <div className="p-4 grid grid-cols-2 gap-2 overflow-y-auto flex-1 content-start custom-scrollbar bg-slate-100 dark:bg-black/20">
          <StatBox icon={Navigation} label="ALT" val={`${telemetry.alt.toFixed(0)}m`} color="text-blue-800 dark:text-blue-400"/>
          <StatBox icon={Wind} label="SPD" val={`${telemetry.speed.toFixed(0)}km/h`} color="text-emerald-800 dark:text-emerald-400"/>

@@ -18,7 +18,7 @@ export default function FeaturesSection({ variants, itemVariants }) {
           { icon: <Smartphone />, title: "Reward Grid", desc: "Citizen reports earn bounty.", color: "orange" }
         ].map((feat, i) => (
           <motion.div key={i} variants={itemVariants} className="bg-slate-900/50 p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
-             {/* Box content... */}
+            
              <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mb-6">{feat.icon}</div>
              <h3 className="text-xl font-bold uppercase">{feat.title}</h3>
              <p className="text-slate-400 text-sm mt-2">{feat.desc}</p>

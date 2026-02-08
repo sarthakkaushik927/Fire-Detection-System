@@ -6,7 +6,7 @@ import { Info, CheckCircle2, ArrowLeft, Users, ShieldCheck, Target } from 'lucid
 export default function AboutUs({ variants, isStandalone }) {
   const navigate = useNavigate()
 
-  // High-fidelity entrance animation for Standalone mode
+  
   const standaloneEntry = {
     hidden: { opacity: 0, scale: 0.9, filter: 'blur(20px)' },
     visible: { opacity: 1, scale: 1, filter: 'blur(0px)', transition: { duration: 0.8, ease: "circOut" } }
@@ -15,7 +15,7 @@ export default function AboutUs({ variants, isStandalone }) {
   return (
     <section className={`py-24 px-6 relative z-10 bg-slate-950 overflow-hidden ${isStandalone ? 'min-h-screen flex flex-col justify-center' : ''}`}>
       
-      {/* 🟢 NAVIGATION: BACK TO BASE */}
+   
       {isStandalone && (
         <motion.button 
           initial={{ opacity: 0, x: -20 }}
@@ -35,7 +35,7 @@ export default function AboutUs({ variants, isStandalone }) {
           viewport={{ once: true }}
           className="grid lg:grid-cols-2 gap-16 items-center"
         >
-          {/* Mission Content */}
+       
           <div className="space-y-8">
             <div className="bg-blue-600/10 w-20 h-20 rounded-[2rem] flex items-center justify-center border border-blue-500/20 shadow-[0_0_30px_rgba(37,99,235,0.1)]">
                <ShieldCheck size={40} className="text-blue-500" />
@@ -64,7 +64,7 @@ export default function AboutUs({ variants, isStandalone }) {
             </div>
           </div>
 
-          {/* Core Team & Stats Grid */}
+       
           <div className="grid grid-cols-2 gap-6">
              <motion.div whileHover={{ scale: 1.02 }} className="p-10 rounded-[3rem] bg-white/5 border border-white/10 text-center space-y-2">
                 <Users className="mx-auto text-blue-500" size={32} />

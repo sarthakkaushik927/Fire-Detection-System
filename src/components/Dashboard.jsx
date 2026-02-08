@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 
-// Logic & Config
+
 import { BACKEND_PROXY } from '../utils/config'
 
-// Sub Components
+
 import WeatherWidget from './dashboard/WeatherWidget'
 import ControlBar from './dashboard/ControlBar'
 import MapViewer from './dashboard/MapViewer'
@@ -17,26 +17,22 @@ export default function Dashboard() {
   const [selectedCountry, setSelectedCountry] = useState("india")
   const [selectedState, setSelectedState] = useState("up")
 
-  // Data States
+  
   const [mapHtml, setMapHtml] = useState('')
   const [mapLoading, setMapLoading] = useState(false)
   const [highRiskPoints, setHighRiskPoints] = useState([]) 
   const [riskLoading, setRiskLoading] = useState(false)
 
-  // 🛠️ CACHE KEYS GENERATOR
   const getCacheKey = (type) => `fire_watch_${type}_${selectedCountry}_${selectedState}`
 
-  // 1. FETCH MAP (WITH CACHING)
-  // forceRefresh is true when clicking the "Refresh" button
   const fetchMap = async (forceRefresh = false) => {
     const cacheKey = getCacheKey('map')
     
-    // 1. Check Cache (if not forcing refresh)
     if (!forceRefresh) {
         const cachedMap = localStorage.getItem(cacheKey)
         if (cachedMap) {
             setMapHtml(cachedMap)
-            return // Stop execution, use cache
+            return 
         }
     }
 
@@ -49,7 +45,6 @@ export default function Dashboard() {
       })
       const data = await res.text()
       
-      // 2. Save to Cache
       try {
           localStorage.setItem(cacheKey, data)
       } catch (err) {
@@ -65,11 +60,11 @@ export default function Dashboard() {
     finally { setMapLoading(false) }
   }
 
-  // 2. FETCH RISK POINTS (WITH CACHING)
+ 
   const fetchHighRiskData = async (forceRefresh = false) => {
     const cacheKey = getCacheKey('risk')
 
-    // 1. Check Cache
+   
     if (!forceRefresh) {
         const cachedRisk = localStorage.getItem(cacheKey)
         if (cachedRisk) {
@@ -93,7 +88,7 @@ export default function Dashboard() {
       
       const result = await res.json()
       
-      // Handle double-stringified JSON
+      
       let parsedData = result.data;
       if (typeof result.data === 'string') {
           try {
@@ -104,7 +99,7 @@ export default function Dashboard() {
       }
 
       let rows = [];
-      // Handle Array vs Object format
+      
       if (Array.isArray(parsedData)) {
           rows = parsedData.map(item => ({
               lat: Number(item.latitude),
@@ -118,7 +113,7 @@ export default function Dashboard() {
           }));
       }
 
-      // 2. Save to Cache
+      
       localStorage.setItem(cacheKey, JSON.stringify(rows))
       
       setHighRiskPoints(rows)
@@ -132,13 +127,12 @@ export default function Dashboard() {
     }
   }
 
-  // Handle Manual Refresh (Calls both APIs with force=true)
+
   const handleManualRefresh = () => {
       fetchMap(true)
       fetchHighRiskData(true)
   }
 
-  // Initial Load & Region Change (Uses cache if available)
   useEffect(() => {
     fetchHighRiskData(false)
     fetchMap(false)
@@ -152,7 +146,7 @@ export default function Dashboard() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      // 🟢 RESPONSIVE HEIGHT: h-screen on desktop, auto on mobile
+    
       className="max-w-[1800px] mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-3 pb-6 pt-0 lg:max-h-[120vh] min-h-screen overflow-y-auto lg:overflow-hidden"
     >
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#1e293b', color: '#fff' } }} />
@@ -165,25 +159,24 @@ export default function Dashboard() {
         riskCount={highRiskPoints.length}
       />
 
-      {/* 🟢 RIGHT SIDE (Desktop): MAP VIEWER */}
+
       <MapViewer 
         mapHtml={mapHtml}
         mapLoading={mapLoading}
-        fetchMap={handleManualRefresh} // Passes the manual refresh handler
+        fetchMap={handleManualRefresh}
         selectedState={selectedState}
         selectedCountry={selectedCountry}
         variants={itemVariants}
         className="lg:col-span-8 order-1 h-[500px] lg:h-full" 
       />
 
-      {/* 🟢 LEFT SIDE (Desktop): WEATHER + RISK LIST */}
+    
       <section className="lg:col-span-4 flex flex-col gap-0 h-auto lg:h-full order-2 lg:overflow-hidden">
         <motion.div variants={itemVariants} className="shrink-0">
             
             <WeatherWidget />
         </motion.div>
         
-        {/* Flex container ensures scrollbar appears only on this list */}
         <motion.div variants={itemVariants} className="flex-1 flex flex-col min-h-[400px] lg:min-h-0 lg:overflow-hidden">
             <HighRiskRegions 
                 highRiskPoints={highRiskPoints} 

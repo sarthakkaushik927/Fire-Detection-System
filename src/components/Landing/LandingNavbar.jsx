@@ -11,7 +11,7 @@ export default function LandingNavbar({ navigate, textEnter, textLeave, user, on
       onLogout()
   }
 
-  // 🟢 REUSABLE LIQUID BUTTON FOR NAVBAR
+
   const NavButton = ({ children, onClick, variant = "glass" }) => {
     const isPrimary = variant === "primary"
     return (
@@ -34,7 +34,7 @@ export default function LandingNavbar({ navigate, textEnter, textLeave, user, on
             : "transparent"
         }}
       >
-        {/* Shine Effect */}
+       
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]" />
         </div>

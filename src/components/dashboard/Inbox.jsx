@@ -8,7 +8,7 @@ import {
 import { supabase } from '../../Supabase/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 
-// 🟢 YOUR LIVE BACKEND URL
+
 const EMAIL_FUNCTION_URL = "https://fxksnraszpzgqouxcuvl.supabase.co/functions/v1/send-email"
 
 export default function Inbox() {
@@ -16,7 +16,7 @@ export default function Inbox() {
   const [loading, setLoading] = useState(true)
   const [selectedMsg, setSelectedMsg] = useState(null)
   
-  // Reply State
+ 
   const [isReplying, setIsReplying] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sendingReply, setSendingReply] = useState(false)
@@ -56,7 +56,7 @@ export default function Inbox() {
     }
   }
 
-  // 🟢 HANDLE SENDING REPLY
+ 
   const handleSendReply = async () => {
     if (!replyText.trim()) return toast.error("Message Payload Empty")
     
@@ -70,12 +70,12 @@ export default function Inbox() {
             body: JSON.stringify({
                 to: selectedMsg.email,
                 
-                // 1. Cleaner Subject Line
+              
                 subject: `Re: FireWatch Inquiry - ${selectedMsg.name}`,
                 
                 description: replyText,
                 
-                // 🟢 2. UPDATED TYPE: Triggers the "Tactical Memo" template
+             
                 type: 'reply', 
                 
                 status: 'verified', 
@@ -110,7 +110,7 @@ export default function Inbox() {
     <div className="flex flex-col h-[calc(100vh-120px)] bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 transition-colors">
       <Toaster position="top-right" />
       
-      {/* HEADER */}
+     
       <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
         <div>
           <h2 className="text-xl font-black tracking-tighter flex items-center gap-2 dark:text-white uppercase italic">
@@ -124,7 +124,7 @@ export default function Inbox() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* LEFT SIDEBAR */}
+        
         <div className="w-full md:w-1/3 border-r border-slate-200 dark:border-white/10 overflow-y-auto bg-slate-50/20 dark:bg-transparent custom-scrollbar">
           {messages.length === 0 && !loading ? (
             <div className="p-20 text-center opacity-40">
@@ -162,7 +162,7 @@ export default function Inbox() {
           )}
         </div>
 
-        {/* RIGHT SIDEBAR: MESSAGE VIEW */}
+       
         <div className="hidden md:flex flex-1 bg-slate-50/50 dark:bg-slate-900/50 flex-col relative overflow-hidden">
           <AnimatePresence mode="wait">
             {selectedMsg ? (
@@ -173,7 +173,7 @@ export default function Inbox() {
                 exit={{ opacity: 0, scale: 0.98 }}
                 className="p-10 max-w-5xl mx-auto w-full h-full flex flex-col"
               >
-                {/* Header Info */}
+                
                 <div className="flex justify-between items-start mb-8 shrink-0">
                   <div className="flex items-center gap-5">
                     <div className="w-16 h-16 rounded-[1.5rem] bg-blue-600 text-white flex items-center justify-center shadow-2xl shadow-blue-500/30 border-2 border-white/20">
@@ -194,7 +194,7 @@ export default function Inbox() {
                   </div>
                 </div>
 
-                {/* DYNAMIC CONTENT */}
+               
                 <div className="flex-1 relative overflow-hidden">
                     <AnimatePresence mode="wait">
                         {!isReplying ? (

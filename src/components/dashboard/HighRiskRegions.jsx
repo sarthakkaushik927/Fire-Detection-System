@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Flame, AlertTriangle, Navigation, MapPin } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-// Helper: Consistent Sector Naming
+
 const generateSectorName = (lat, lon) => {
   const zones = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'ZULU', 'OMEGA', 'TITAN', 'NOVA'];
   const index = Math.floor((Math.abs(lat) + Math.abs(lon)) * 100) % zones.length;
@@ -21,7 +21,7 @@ export default function HighRiskRegions({ highRiskPoints, loading }) {
   return (
     <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-white/10 flex-1 flex flex-col mi     max-h-[87vh] overflow-hidden relative">
       
-      {/* Header */}
+      
       <div className="flex justify-between items-center mb-6">
         <div>
             <h3 className="font-black text-slate-800 dark:text-white text-lg uppercase tracking-wide flex items-center gap-2">
@@ -35,7 +35,7 @@ export default function HighRiskRegions({ highRiskPoints, loading }) {
         </span>
       </div>
 
-      {/* List */}
+      
       <div className="flex-1 overflow-y-scroll pr-2 space-y-3 custom-scrollbar  ">
         {loading ? (
             <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-400">
@@ -75,7 +75,7 @@ export default function HighRiskRegions({ highRiskPoints, loading }) {
                             </div>
                         </div>
                         
-                        {/* Hover Effect Background */}
+                      
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-red-500/5 translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                     </motion.div>
                 )

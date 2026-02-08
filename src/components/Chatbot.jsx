@@ -5,7 +5,7 @@ import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles, AlertCircle } fro
 const API_URL = "https://keryptonite-8k3u.vercel.app/chat";
 const USER_ID = "ranger_alpha_1";
 
-// --- Formatted Text Component (Unchanged) ---
+
 const FormattedText = React.memo(({ text }) => {
   if (!text) return <span className="text-slate-400 italic">No content.</span>;
   const safeText = text.replace(/\\n/g, '\n');
@@ -56,7 +56,6 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // 🟢 New Refs for Dragging Logic
   const constraintsRef = useRef(null);
   const isDragging = useRef(false);
 
@@ -146,7 +145,7 @@ export default function Chatbot() {
     }
   };
 
-  // 🟢 Helper to handle click vs drag
+  
   const handleToggle = () => {
     if (!isDragging.current) {
       setIsOpen(!isOpen);
@@ -154,7 +153,7 @@ export default function Chatbot() {
   };
 
   return (
-    // 🟢 Added ref={constraintsRef} here to define the draggable area
+    
     <div ref={constraintsRef} className="fixed inset-0 z-[9999] pointer-events-none flex flex-col items-end justify-end p-4 sm:p-6 overflow-hidden">
 
       <AnimatePresence>
@@ -166,7 +165,7 @@ export default function Chatbot() {
             transition={{ duration: 0.2 }}
             className="pointer-events-auto w-full sm:w-[400px] h-[60vh] sm:h-[600px] flex flex-col rounded-2xl sm:rounded-[2rem] overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl backdrop-blur-xl bg-white/95 dark:bg-slate-900/95 mb-20 sm:mb-4 origin-bottom-right"
           >
-            {/* --- HEADER --- */}
+            
             <div className="p-3 sm:p-4 border-b border-slate-200/50 dark:border-white/5 bg-gradient-to-r from-orange-50/50 to-red-50/50 dark:from-orange-900/10 dark:to-red-900/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-100 dark:bg-orange-500/20 rounded-full border border-orange-200 dark:border-orange-500/30">
@@ -190,7 +189,6 @@ export default function Chatbot() {
               </button>
             </div>
 
-            {/* --- MESSAGES AREA --- */}
             <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 custom-scrollbar bg-slate-50/50 dark:bg-black/20">
               {messages.map((msg) => (
                 <div
@@ -236,7 +234,6 @@ export default function Chatbot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* --- INPUT AREA --- */}
             <form onSubmit={handleSend} className="p-3 sm:p-4 bg-white/50 dark:bg-slate-900/50 border-t border-slate-200/50 dark:border-white/5 backdrop-blur-sm">
               <div className="relative flex items-center">
                 <input
@@ -261,15 +258,15 @@ export default function Chatbot() {
         )}
       </AnimatePresence>
 
-      {/* --- DRAGGABLE TOGGLE BUTTON --- */}
+     
       <motion.button
-        // 🟢 Enable dragging
+        
         drag
-        // 🟢 Constrain to the outer div
+        
         dragConstraints={constraintsRef}
-        // 🟢 Snap back elasticity
+       
         dragElastic={0.1}
-        // 🟢 Prevent drag from triggering click
+       
         onDragStart={() => (isDragging.current = true)}
         onDragEnd={() => setTimeout(() => (isDragging.current = false), 100)}
 
@@ -277,7 +274,7 @@ export default function Chatbot() {
         animate={{
           scale: 1,
           rotate: 0,
-          // Removed the Y bounce animation as it conflicts with user dragging
+         
           boxShadow: [
             "0 0 0px rgba(249,115,22,0.4)",
             "0 0 20px rgba(249,115,22,0.6)",
@@ -292,7 +289,7 @@ export default function Chatbot() {
 
         onClick={handleToggle}
         className="pointer-events-auto cursor-grab active:cursor-grabbing p-4 bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-full border border-white/20 backdrop-blur-md flex items-center justify-center group z-[100] shadow-2xl"
-        // 🟢 Remove fixed positioning so transform works better for dragging, or keep fixed if initial placement matters
+      
         style={{ position: 'absolute', bottom: '1.5rem', right: '1.5rem' }}
       >
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}

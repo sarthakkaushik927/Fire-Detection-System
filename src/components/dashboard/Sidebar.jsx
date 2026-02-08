@@ -5,12 +5,11 @@ import {
   LayoutDashboard, FileWarning, Plane, Download, 
   LogOut, Sun, Moon, User, Flame, Settings 
 } from 'lucide-react'
-import { useTheme } from '../../context/ThemeContext' // 🟢 Import Theme Context
+import { useTheme } from '../../context/ThemeContext' 
 
 export default function Sidebar() {
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme() // 🟢 Get Theme Logic
-
+  const { theme, toggleTheme } = useTheme() 
   const isActive = (path) => location.pathname === path
 
   const navItems = [
@@ -28,10 +27,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* 🟢 DESKTOP SIDEBAR */}
+      
       <div className="hidden md:flex fixed left-0 top-0 h-screen w-64 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-white/10 transition-colors z-40">
         
-        {/* LOGO AREA */}
+        
         <div className="p-8 flex items-center gap-3">
           <div className="bg-orange-600 p-2 rounded-xl text-white">
             <Flame size={24} fill="currentColor" />
@@ -42,7 +41,7 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* NAVIGATION */}
+        
         <div className="flex-1 px-4 space-y-2 py-4">
           {navItems.map((item) => (
             <Link
@@ -64,10 +63,10 @@ export default function Sidebar() {
           ))}
         </div>
 
-        {/* 🟢 FOOTER ACTIONS (TOGGLE & LOGOUT) */}
+        
         <div className="p-4 border-t border-slate-200 dark:border-white/10 space-y-3">
           
-          {/* Theme Toggle Button */}
+         
           <button 
             onClick={toggleTheme}
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition"
@@ -81,7 +80,7 @@ export default function Sidebar() {
             </div>
           </button>
 
-          {/* Logout Button */}
+       
           <button 
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 font-bold text-xs uppercase transition-colors"
@@ -91,7 +90,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* 🟢 MOBILE BOTTOM BAR (For small screens) */}
+     
       <div className="md:hidden fixed bottom-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/10 z-50 px-6 py-3 flex justify-between items-center safe-area-bottom">
         {navItems.slice(0, 4).map((item) => (
           <Link 

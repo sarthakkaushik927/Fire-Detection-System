@@ -4,7 +4,7 @@ import { AlertTriangle, X, LogOut, ShieldCheck } from 'lucide-react'
 
 export default function LogoutModal({ isOpen, onClose, onConfirm }) {
   
-  // 🟢 REUSABLE LIQUID BUTTON (Mini Version for Modal)
+
   const ModalButton = ({ children, onClick, variant = "primary" }) => {
     const isPrimary = variant === "primary"
     return (
@@ -40,7 +40,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
           
-          {/* 🟢 BACKDROP (Dark Blur) */}
+        
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -49,19 +49,19 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
             className="absolute inset-0 bg-[#020617]/80 backdrop-blur-md cursor-pointer"
           />
 
-          {/* 🟢 MODAL CONTENT (Liquid Glass Box) */}
+        
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             className="relative w-full max-w-md bg-[#0a0a0a]/90 border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/50"
           >
-            {/* Top Red Warning Stripe */}
+           
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-orange-500 to-red-600" />
             
             <div className="p-8 text-center relative z-10">
               
-              {/* ICON GLOW */}
+           
               <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(220,38,38,0.2)]">
                 <AlertTriangle className="text-red-500 animate-pulse" size={32} />
               </div>
@@ -85,10 +85,10 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
               </div>
             </div>
 
-            {/* Background Grid Texture */}
+           
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay" />
             
-            {/* Corner Accents */}
+          
             <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/10 rounded-bl-xl" />
             <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/10 rounded-br-xl" />
 

@@ -9,7 +9,7 @@ export const useDroneStream = (url) => {
     ws.onopen = () => setIsConnected(true);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      // Assuming your drone sends base64 strings
+      
       setFrame(`data:image/jpeg;base64,${data.image}`);
     };
     ws.onclose = () => setIsConnected(false);

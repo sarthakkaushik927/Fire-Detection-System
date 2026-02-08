@@ -15,13 +15,11 @@ import RegistryCTA from './RegistryCTA'
 import Stats from './Stats'
 import Footer from './Footer'
 
-// 🟢 NEW CONTACT SECTION IMPORT
 import ContactSection from './ContactSection'
 
 export default function LandingPage({ user, onLogout }) {
   const navigate = useNavigate()
-  
-  // --- GATEKEEPER LOGIC ---
+
   const handleRestrictedAccess = (path) => {
     if (path === '/registry' || path === '/report') {
          navigate(path)
@@ -35,7 +33,7 @@ export default function LandingPage({ user, onLogout }) {
     }
   }
 
-  // --- CUSTOM CURSOR ---
+ 
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [cursorVariant, setCursorVariant] = useState("default")
 
@@ -71,7 +69,7 @@ export default function LandingPage({ user, onLogout }) {
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans overflow-x-hidden cursor-none selection:bg-red-500/30">
       
-      {/* Custom Cursor */}
+      
       <motion.div 
         className="fixed top-0 left-0 rounded-full pointer-events-none z-[100] hidden md:flex items-center justify-center" 
         variants={cursorVariants} 
@@ -111,7 +109,7 @@ export default function LandingPage({ user, onLogout }) {
       
       <Stats />
       
-      {/* 🟢 2. ADD NEW CONTACT SECTION */}
+     
       <ContactSection textEnter={textEnter} textLeave={textLeave} />
       
       <Footer 

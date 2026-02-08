@@ -4,7 +4,6 @@ import { PerspectiveCamera, Sparkles, Float, Sphere, Ring, Stars, Grid, Cloud } 
 import { motion } from 'framer-motion'
 import * as THREE from 'three'
 
-// --- 1. LIQUID GLASS BUTTON ---
 const LiquidButton = ({ children, onClick, variant = "primary", className }) => {
   const isPrimary = variant === "primary"
 
@@ -41,7 +40,7 @@ const LiquidButton = ({ children, onClick, variant = "primary", className }) => 
   )
 }
 
-// --- 2. INTERACTIVE CURSOR ---
+
 function TacticalCursor() {
   const lightRef = useRef()
   const ringRef = useRef()
@@ -77,7 +76,7 @@ function TacticalCursor() {
 
 function CameraRig() {
     useFrame((state) => {
-        // Adds subtle parallax on mouse move
+        
         state.camera.position.x += (state.pointer.x * 2 - state.camera.position.x) * 0.02
         state.camera.position.y += (state.pointer.y * 1 + 3 - state.camera.position.y) * 0.02
         state.camera.lookAt(0, 0, 0)
@@ -120,14 +119,13 @@ function DenseTerrain() {
     )
 }
 
-// 🟢 ROTATING WORLD COMPONENT
 function RotatingWorld() {
     const groupRef = useRef()
     
-    // Auto-rotate the terrain and objects slowly
+    
     useFrame((state, delta) => {
         if (groupRef.current) {
-            groupRef.current.rotation.y += delta * 0.05 // Adjust speed here
+            groupRef.current.rotation.y += delta * 0.05 
         }
     })
 
@@ -157,29 +155,28 @@ function Scene() {
     <>
       <PerspectiveCamera makeDefault position={[0, 5, 18]} fov={50} />
       
-      {/* 🟢 CONTROLS */}
-      <CameraRig />      {/* Mouse Parallax */}
-      <TacticalCursor /> {/* Spotlight that follows mouse */}
       
-      {/* 🟢 ATMOSPHERE */}
+      <CameraRig />      
+      <TacticalCursor /> 
+      
+     
       <color attach="background" args={['#030000']} />
       <fogExp2 attach="fog" args={['#050101', 0.025]} />
       <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
       <Cloud opacity={0.1} speed={0.4} width={10} depth={1.5} segments={20} position={[0, 5, -10]} color="#ff4400" />
       <Cloud opacity={0.1} speed={0.4} width={10} depth={1.5} segments={20} position={[-10, 5, -15]} color="#440000" />
       
-      {/* 🟢 LIGHTING */}
+      
       <ambientLight intensity={0.5} color="#2222ff" />
       <directionalLight position={[10, 10, 5]} intensity={2} color="#ffaa00" />
       <pointLight position={[-20, 5, -10]} intensity={5} color="#ff0000" />
 
-      {/* 🟢 ROTATING CONTENT */}
       <RotatingWorld />
     </>
   )
 }
 
-// --- 3. MAIN UI ---
+
 
 const Hero = ({ navigate, textEnter, textLeave }) => {
   return (
@@ -196,7 +193,7 @@ const Hero = ({ navigate, textEnter, textLeave }) => {
 
       <div className="relative z-10 text-center max-w-6xl px-6 pointer-events-none flex flex-col items-center">
         
-        {/* Status Badge */}
+       
         <motion.div 
           initial={{ opacity: 0, y: -20 }} 
           animate={{ opacity: 1, y: 0 }} 
@@ -207,7 +204,7 @@ const Hero = ({ navigate, textEnter, textLeave }) => {
           Orbital Status: Online
         </motion.div>
 
-        {/* Big Text */}
+       
         <motion.h1 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -220,7 +217,6 @@ const Hero = ({ navigate, textEnter, textLeave }) => {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-500">NEUTRALIZE.</span>
         </motion.h1>
 
-        {/* Subtitle */}
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -230,7 +226,7 @@ const Hero = ({ navigate, textEnter, textLeave }) => {
           NASA Satellite Monitoring and Autonomous Drone Interception Protocol.
         </motion.p>
 
-        {/* LIQUID BUTTONS */}
+       
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
