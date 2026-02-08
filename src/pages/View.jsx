@@ -13,7 +13,7 @@ export default function View() {
 
         const connect = () => {
             // 🟢 Native WebSocket Connection
-            ws = new WebSocket(`http://13.51.249.146:8002/api/streamFireImage/ws_fire_image/${roomId}`);
+            ws = new WebSocket(`wss://fire.anurag11.me/api/streamFireImage/ws_fire_image/${roomId}`);
 
             ws.onopen = () => {
                 if (!isMounted) return;

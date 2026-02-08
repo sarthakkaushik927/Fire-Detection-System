@@ -14,7 +14,7 @@ export default function Stream() {
 
         // 🟢 Connect to Native WebSocket
         const connect = () => {
-            ws = new WebSocket(`http://13.51.249.146:8002/api/streamFireImage/ws_fire_image/${roomId}`);
+            ws = new WebSocket(`wss://fire.anurag11.me/api/streamFireImage/ws_fire_image/${roomId}`);
             socketRef.current = ws;
 
             ws.onopen = () => {
