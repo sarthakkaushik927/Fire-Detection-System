@@ -19,7 +19,7 @@ export default function HighRiskRegions({ highRiskPoints, loading }) {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-white/10 flex-1 flex flex-col min-h-[400px] overflow-hidden relative">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-slate-200 dark:border-white/10 flex-1 flex flex-col mi     max-h-[87vh] overflow-hidden relative">
       
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
@@ -36,7 +36,7 @@ export default function HighRiskRegions({ highRiskPoints, loading }) {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+      <div className="flex-1 overflow-y-scroll pr-2 space-y-3 custom-scrollbar  ">
         {loading ? (
             <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-400">
                 <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
@@ -55,7 +55,7 @@ export default function HighRiskRegions({ highRiskPoints, loading }) {
                         className="group bg-slate-50 dark:bg-slate-950/50 hover:bg-red-50 dark:hover:bg-red-900/10 border border-slate-200 dark:border-white/5 hover:border-red-500/30 p-4 rounded-xl transition-all cursor-pointer relative overflow-hidden"
                         onClick={() => handleDeploy(point.lat, point.lon)}
                     >
-                        <div className="flex justify-between items-center relative z-10">
+                        <div className="flex justify-between items-center relative z-10 ">
                             <div className="flex items-center gap-3">
                                 <div className="bg-red-100 dark:bg-red-500/20 p-2.5 rounded-lg text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform">
                                     <AlertTriangle size={20} />

@@ -153,7 +153,7 @@ export default function Dashboard() {
       initial="hidden"
       animate="visible"
       // 🟢 RESPONSIVE HEIGHT: h-screen on desktop, auto on mobile
-      className="max-w-[1800px] mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-6 pt-4 lg:h-auto] h-auto overflow-y-auto lg:overflow-hidden"
+      className="max-w-[1800px] mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-3 pb-6 pt-0 lg:max-h-[120vh] min-h-screen overflow-y-auto lg:overflow-hidden"
     >
       <Toaster position="bottom-right" toastOptions={{ style: { background: '#1e293b', color: '#fff' } }} />
 
@@ -177,7 +177,7 @@ export default function Dashboard() {
       />
 
       {/* 🟢 LEFT SIDE (Desktop): WEATHER + RISK LIST */}
-      <section className="lg:col-span-4 flex flex-col gap-6 h-auto lg:h-full order-2 lg:overflow-hidden">
+      <section className="lg:col-span-4 flex flex-col gap-0 h-auto lg:h-full order-2 lg:overflow-hidden">
         <motion.div variants={itemVariants} className="shrink-0">
             
             <WeatherWidget />

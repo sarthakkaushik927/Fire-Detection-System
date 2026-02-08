@@ -25,7 +25,7 @@ const FormattedText = React.memo(({ text }) => {
 
     const isBullet = trimmed.startsWith('* ') || trimmed.startsWith('- ');
     const isNumbered = /^\d+\.\s/.test(trimmed);
-    
+
     let cleanLine = trimmed;
     if (isBullet) cleanLine = trimmed.substring(2);
     if (isNumbered) cleanLine = trimmed.replace(/^\d+\.\s/, '');
@@ -55,16 +55,16 @@ export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // 🟢 New Refs for Dragging Logic
   const constraintsRef = useRef(null);
   const isDragging = useRef(false);
 
   const [messages, setMessages] = useState([
-    { 
+    {
       id: 'init-1',
-      sender: 'ai', 
-      text: "Hello Commander. FireWatch Tactical Support is ready. How can I assist with your sector today?" 
+      sender: 'ai',
+      text: "Hello Commander. FireWatch Tactical Support is ready. How can I assist with your sector today?"
     }
   ]);
 
@@ -97,7 +97,7 @@ export default function Chatbot() {
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
@@ -117,29 +117,29 @@ export default function Chatbot() {
       }
 
       const data = await response.json();
-      
+
       if (!data || !data.response) {
         throw new Error("Invalid response format from server");
       }
 
-      setMessages(prev => [...prev, { 
-        id: Date.now().toString(), 
-        sender: 'ai', 
-        text: data.response 
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: 'ai',
+        text: data.response
       }]);
 
     } catch (error) {
       console.error("Chatbot Error:", error);
-      
+
       let friendlyError = "Connection lost. Please check your network.";
       if (error.message.includes("Server Error")) friendlyError = "Command server is currently unreachable (500).";
       if (error.message.includes("Failed to fetch")) friendlyError = "Cannot reach server. Possible CORS or network issue.";
 
-      setMessages(prev => [...prev, { 
-        id: Date.now().toString(), 
-        sender: 'ai', 
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: 'ai',
         isError: true,
-        text: `**ALERT:** ${friendlyError}` 
+        text: `**ALERT:** ${friendlyError}`
       }]);
     } finally {
       setIsLoading(false);
@@ -156,7 +156,7 @@ export default function Chatbot() {
   return (
     // 🟢 Added ref={constraintsRef} here to define the draggable area
     <div ref={constraintsRef} className="fixed inset-0 z-[9999] pointer-events-none flex flex-col items-end justify-end p-4 sm:p-6 overflow-hidden">
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -177,13 +177,13 @@ export default function Chatbot() {
                     FIREWATCH AI <Sparkles size={10} className="text-yellow-500" />
                   </h3>
                   <p className="text-[9px] sm:text-[10px] font-mono text-green-600 dark:text-green-400 font-bold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> 
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                     {isLoading ? 'TRANSMITTING...' : 'ONLINE'}
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsOpen(false)} 
+              <button
+                onClick={() => setIsOpen(false)}
                 className="pointer-events-auto p-2 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
               >
                 <X size={20} />
@@ -197,13 +197,12 @@ export default function Chatbot() {
                   key={msg.id}
                   className={`flex gap-2 sm:gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                 >
-                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 border ${
-                    msg.sender === 'user' 
-                      ? 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700' 
-                      : msg.isError 
-                        ? 'bg-red-100 dark:bg-red-900/20 border-red-200' 
+                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 border ${msg.sender === 'user'
+                      ? 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700'
+                      : msg.isError
+                        ? 'bg-red-100 dark:bg-red-900/20 border-red-200'
                         : 'bg-orange-100 dark:bg-orange-900/20 border-orange-200 dark:border-orange-500/30'
-                  }`}>
+                    }`}>
                     {msg.sender === 'user' ? (
                       <User size={12} className="text-slate-600 dark:text-slate-300" />
                     ) : msg.isError ? (
@@ -213,26 +212,25 @@ export default function Chatbot() {
                     )}
                   </div>
 
-                  <div className={`max-w-[85%] p-2.5 sm:p-4 rounded-2xl shadow-sm ${
-                    msg.sender === 'user' 
-                      ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-tr-none' 
+                  <div className={`max-w-[85%] p-2.5 sm:p-4 rounded-2xl shadow-sm ${msg.sender === 'user'
+                      ? 'bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-tr-none'
                       : msg.isError
                         ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-200 border border-red-100 dark:border-red-900/30'
                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-white/5 rounded-tl-none'
-                  }`}>
+                    }`}>
                     <FormattedText text={msg.text} />
                   </div>
                 </div>
               ))}
-              
+
               {isLoading && (
                 <div className="flex gap-3">
-                   <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center border border-orange-200 dark:border-orange-500/30">
-                      <Loader2 size={14} className="animate-spin text-orange-500"/>
-                   </div>
-                   <div className="bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl rounded-tl-none border border-slate-100 dark:border-white/5 text-xs text-slate-400 animate-pulse">
-                      Processing tactical data...
-                   </div>
+                  <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center border border-orange-200 dark:border-orange-500/30">
+                    <Loader2 size={14} className="animate-spin text-orange-500" />
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl rounded-tl-none border border-slate-100 dark:border-white/5 text-xs text-slate-400 animate-pulse">
+                    Processing tactical data...
+                  </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -274,10 +272,10 @@ export default function Chatbot() {
         // 🟢 Prevent drag from triggering click
         onDragStart={() => (isDragging.current = true)}
         onDragEnd={() => setTimeout(() => (isDragging.current = false), 100)}
-        
+
         initial={{ scale: 0, rotate: 180 }}
-        animate={{ 
-          scale: 1, 
+        animate={{
+          scale: 1,
           rotate: 0,
           // Removed the Y bounce animation as it conflicts with user dragging
           boxShadow: [
@@ -291,16 +289,15 @@ export default function Chatbot() {
         }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9, cursor: "grabbing" }}
-        
+
         onClick={handleToggle}
         className="pointer-events-auto cursor-grab active:cursor-grabbing p-4 bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-full border border-white/20 backdrop-blur-md flex items-center justify-center group z-[100] shadow-2xl"
         // 🟢 Remove fixed positioning so transform works better for dragging, or keep fixed if initial placement matters
-        style={{ position: 'absolute', bottom: '1.5rem', right: '1.5rem' }} 
+        style={{ position: 'absolute', bottom: '1.5rem', right: '1.5rem' }}
       >
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
         {!isOpen && (
-           <span className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full animate-bounce"></span>
+          <span className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full animate-bounce"></span>
         )}
       </motion.button>
     </div>

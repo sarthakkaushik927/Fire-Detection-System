@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 export default function Stream() {
@@ -6,6 +6,9 @@ export default function Stream() {
     const videoRef = useRef(null);
     const socketRef = useRef(null);
     const intervalRef = useRef(null);
+    const [cameras, setCameras] = useState([]);
+    const [selectedCamera, setSelectedCamera] = useState("");
+    const [showCameraSelect, setShowCameraSelect] = useState(false);
 
     useEffect(() => {
         let ws = null;
@@ -38,10 +41,37 @@ export default function Stream() {
 
         const startStream = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 640, height: 480 }, // Optimize resolution for streaming
-                    audio: false, // We focused on video frame analysis
-                });
+                // Get list of available cameras
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                setCameras(videoDevices);
+
+                // Determine which camera to use
+                let deviceId = selectedCamera;
+
+                if (!deviceId && videoDevices.length > 0) {
+                    // Try to find back camera on mobile
+                    const backCamera = videoDevices.find(device =>
+                        device.label.toLowerCase().includes('back') ||
+                        device.label.toLowerCase().includes('rear') ||
+                        device.label.toLowerCase().includes('environment')
+                    );
+
+                    deviceId = backCamera ? backCamera.deviceId : videoDevices[0].deviceId;
+                    setSelectedCamera(deviceId);
+                }
+
+                const constraints = {
+                    video: {
+                        deviceId: deviceId ? { exact: deviceId } : undefined,
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: deviceId ? undefined : { ideal: "environment" } // Fallback for mobile
+                    },
+                    audio: false,
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
                 if (!isMounted) return;
 
@@ -73,7 +103,7 @@ export default function Stream() {
                             ws.send(base64Data);
                         }
                     }
-                },300);// 10 FPS (100ms interval)
+                }, 300);// 10 FPS (100ms interval)
             } catch (err) {
                 console.error("Camera access error:", err);
             }
@@ -90,11 +120,50 @@ export default function Stream() {
                 videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
             }
         };
-    }, [roomId]);
+    }, [roomId, selectedCamera]); // Re-run when camera changes
+
+    const handleCameraChange = (deviceId) => {
+        setSelectedCamera(deviceId);
+        setShowCameraSelect(false);
+    };
 
     return (
-        <div className="w-full h-screen bg-black flex flex-col items-center justify-center">
+        <div className="w-full h-screen bg-black flex flex-col items-center justify-center relative">
             <h1 className="text-white mb-4 animate-pulse">🔴 Live Streaming...</h1>
+
+            {/* Camera Selection Button */}
+            {cameras.length > 1 && (
+                <div className="absolute top-4 right-4 z-50">
+                    <button
+                        onClick={() => setShowCameraSelect(!showCameraSelect)}
+                        className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm border border-white/20 transition-all"
+                    >
+                        📷 Switch Camera
+                    </button>
+
+                    {/* Camera Dropdown */}
+                    {showCameraSelect && (
+                        <div className="absolute right-0 mt-2 bg-gray-900 rounded-lg shadow-xl border border-white/20 overflow-hidden min-w-[200px]">
+                            {cameras.map((camera) => (
+                                <button
+                                    key={camera.deviceId}
+                                    onClick={() => handleCameraChange(camera.deviceId)}
+                                    className={`w-full text-left px-4 py-3 hover:bg-white/10 transition-colors ${selectedCamera === camera.deviceId ? 'bg-orange-500/20 text-orange-400' : 'text-white'
+                                        }`}
+                                >
+                                    <div className="text-sm font-medium">
+                                        {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
+                                    </div>
+                                    {selectedCamera === camera.deviceId && (
+                                        <div className="text-xs text-orange-400 mt-1">✓ Active</div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             <video
                 ref={videoRef}
                 autoPlay
