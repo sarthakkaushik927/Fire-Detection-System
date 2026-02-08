@@ -16,6 +16,8 @@ import ReportFire from './components/ReportFire'
 import AdminGate from './components/AdminGate'
 import LiveStream from './components/LiveStream'
 import DataAnalysis from './components/DataAnalysis'
+import Stream from './pages/Stream'
+import View from './pages/View'
 
 import LandingPage from './components/Landing/LandingPage'
 import AboutUs from './components/Landing/AboutUs'
@@ -143,6 +145,8 @@ function App() {
                 <Route path="/downloads" element={<DownloadsPage />} />
                 <Route path="/account" element={<AccountPage user={user} />} />
                 <Route path="/inbox" element={<Inbox />} />
+                <Route path="/stream/:roomId" element={<Stream />} />
+            <Route path="/view/:roomId" element={<View />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
