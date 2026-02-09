@@ -78,7 +78,7 @@ export default function AdminGate({ children }) {
               type="password" 
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="ENTER COMMAND CODE"
+              placeholder="use - admin123"
               className="w-full bg-black/50 border border-slate-700 rounded-xl px-12 py-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500 focus:bg-red-950/10 transition-all font-mono text-center tracking-[0.5em] text-lg"
               autoFocus
             />
