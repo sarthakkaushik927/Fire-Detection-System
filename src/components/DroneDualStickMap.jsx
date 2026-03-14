@@ -212,7 +212,7 @@ const DroneRouteMap = () => {
   }
 
   useEffect(() => {
- mapboxgl.accessToken = 'pk.eyJ1IjoiYW51dXUxMTExMTExMSIsImEiOiJjbWxiend6dGUwcWlpM2ZzOTBseWZjenpqIn0.UmHLNCHiLOb8XLa0JvMmJQ';
+ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_API_KEY
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,

@@ -4,7 +4,7 @@ import { Image, Loader2, RefreshCw, AlertTriangle, FileBarChart } from 'lucide-r
 import { Toaster, toast } from 'react-hot-toast'
 
 
-const ANALYZER_API = "https://keryptonite-8k3u.vercel.app/api/fires/data_analyser"
+const ANALYZER_API = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/fires/data_analyser`
 
 const DataAnalysis = () => {
     const [images, setImages] = useState([])

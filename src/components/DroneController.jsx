@@ -86,7 +86,7 @@ const DroneController = () => {
   }, [location])
 
   useEffect(() => {
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYW51dXUxMTExMTExMSIsImEiOiJjbWxiend6dGUwcWlpM2ZzOTBseWZjenpqIn0.UmHLNCHiLOb8XLa0JvMmJQ'
+    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_API_KEY
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,

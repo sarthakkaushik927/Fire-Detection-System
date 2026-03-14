@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 
-const API_URL = "https://keryptonite-8k3u.vercel.app/chat";
+const API_URL = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/chat`;
 const USER_ID = "ranger_alpha_1";
 
 

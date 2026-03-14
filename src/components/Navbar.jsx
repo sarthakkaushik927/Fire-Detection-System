@@ -11,7 +11,7 @@ import LogoutModal from './LogoutModal'
 import Chatbot from './Chatbot'
 
 
-const BACKEND_URL = "https://keryptonite-8k3u.vercel.app"
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"
 
 
 const generateSectorName = (lat, lon) => {

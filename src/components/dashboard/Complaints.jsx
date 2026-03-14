@@ -9,7 +9,7 @@ import { supabase } from '../../Supabase/supabase'
 import toast, { Toaster } from 'react-hot-toast' 
 
 
-const BACKEND_PROXY = "https://keryptonite-8k3u.vercel.app"
+const BACKEND_PROXY = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"
 
 export default function Complaints() {
   const navigate = useNavigate()

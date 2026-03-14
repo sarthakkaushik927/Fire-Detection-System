@@ -8,10 +8,11 @@ export default defineConfig({
     proxy: {
       
       '/api': {
-        target: 'https://keryptonite-8k3u.vercel.app',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       }
     }
   }
 })
+// target: 'https://keryptonite-8k3u.vercel.app',

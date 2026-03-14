@@ -1,5 +1,5 @@
 // src/utils/config.js
-export const BACKEND_PROXY = "https://keryptonite-8k3u.vercel.app"
+export const BACKEND_PROXY = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"
 
 export const REGIONS = {
   india: [
