@@ -87,7 +87,7 @@ export default function View() {
                 zoom: 15,
                 pitch: 60,
                 bearing: -20,
-                interactive: false
+                interactive: true
             });
 
             mapRef.current.on('load', () => {

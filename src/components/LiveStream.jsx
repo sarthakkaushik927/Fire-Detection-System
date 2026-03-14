@@ -33,7 +33,7 @@ const LiveStream = () => {
         zoom: 15,
         pitch: 60,
         bearing: -20,
-        interactive: false // Make it a static minimap for now
+        interactive: true // Made it interactive
       });
 
       mapRef.current.on('load', () => {
