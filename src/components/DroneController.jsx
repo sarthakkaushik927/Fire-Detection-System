@@ -73,10 +73,18 @@ const DroneController = () => {
         setTargetLat(lat)
         setTargetLng(lon)
         
+        const basePos = calculateNewPos(lat, lon, 45, 5000)
+        const newBaseLng = basePos[0].toFixed(6)
+        const newBaseLat = basePos[1].toFixed(6)
+        
+        setBaseLat(newBaseLat)
+        setBaseLng(newBaseLng)
+        
         const checkMap = setInterval(() => {
             if (mapRef.current && mapRef.current.isStyleLoaded()) {
+                teleportDrone(newBaseLat, newBaseLng)
                 performLock(lat, lon)
-                toast.success(`Target Coordinates Received`)
+                toast.success(`Target Coordinates Received & Base Set`)
                 clearInterval(checkMap)
             }
         }, 500)
@@ -198,11 +206,21 @@ const DroneController = () => {
       if (!isNaN(lat) && !isNaN(lng)) {
         if (type === 'TARGET') {
           setTargetLat(lat); setTargetLng(lng)
+          
+          // Calculate a point approximately 5km away for the base
+          // We can use a random bearing or a fixed one (e.g., 45 degrees)
+          const basePos = calculateNewPos(lat, lng, 45, 5000); // 5000 meters = 5km
+          const newBaseLng = basePos[0].toFixed(6);
+          const newBaseLat = basePos[1].toFixed(6);
+          
+          setBaseLat(newBaseLat); setBaseLng(newBaseLng);
+          teleportDrone(newBaseLat, newBaseLng);
+          toast.success("Target Set & Base Positioned 5km away");
         } else {
           setBaseLat(lat); setBaseLng(lng)
           teleportDrone(lat, lng)
+          toast.success("Coordinates Pasted")
         }
-        toast.success("Coordinates Pasted")
       } else {
         toast.error("Invalid numbers")
       }
